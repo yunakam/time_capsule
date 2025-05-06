@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">TimeCapsule</string>
+    <string name="close">Close</string>
+    <string name="note_text_required">Note Text (required)</string>
+</resources>
