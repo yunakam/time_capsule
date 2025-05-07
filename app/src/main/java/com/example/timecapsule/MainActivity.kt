@@ -2,6 +2,7 @@ package com.example.timecapsule
 
 import android.content.Intent
 import android.os.Bundle
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -23,13 +24,15 @@ class MainActivity : AppCompatActivity() {
 
         db = AppDatabase.getInstance(this)
 
-        // RecyclerView setup
         val recyclerView: RecyclerView = findViewById(R.id.recyclerView)
-        noteAdapter = NoteAdapter(noteList, this::onNoteClick)
+        noteAdapter = NoteAdapter(
+            notes = noteList,
+            onDeleteClick = { note -> showDeleteConfirmation(note) },
+            onNoteClick = { note, position -> onNoteClick(note, position) }
+        )
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = noteAdapter
 
-        // Add Note button
         val addNoteButton: FloatingActionButton = findViewById(R.id.addNoteButton)
         addNoteButton.setOnClickListener {
             val intent = Intent(this, AddNoteActivity::class.java)
@@ -57,10 +60,28 @@ class MainActivity : AppCompatActivity() {
         startActivityForResult(intent, EDIT_NOTE_REQUEST)
     }
 
+    private fun showDeleteConfirmation(note: Note) {
+        AlertDialog.Builder(this)
+            .setTitle("Delete Note")
+            .setMessage("Are you sure you want to delete this note?")
+            .setPositiveButton("Delete") { _, _ -> deleteNote(note) }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun deleteNote(note: Note) {
+        lifecycleScope.launch {
+            withContext(Dispatchers.IO) {
+                db.noteDao().delete(note)
+            }
+            noteList.remove(note)
+            noteAdapter.notifyDataSetChanged()
+        }
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (resultCode == RESULT_OK) {
-            // No need to handle data directly; just reload notes from DB
             loadNotes()
         }
     }

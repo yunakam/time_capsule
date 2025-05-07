@@ -2,4 +2,16 @@
     <string name="app_name">TimeCapsule</string>
     <string name="close">Close</string>
     <string name="note_text_required">Note Text (required)</string>
+    <string name="delete_note">Delete</string>
+    <string name="date">Date</string>
+    <string name="note_text">Note Text</string>
+    <string name="note">Note</string>
+    <string name="author">Author</string>
+    <string name="source_title">Source Title</string>
+    <string name="source_url">Source URL</string>
+    <string name="page">Page</string>
+    <string name="publisher">Publisher</string>
+    <string name="save">Save</string>
+    <string name="tags_comma_separated">Tags (comma-separated)</string>
+    <string name="delete">Delete</string>
 </resources>
