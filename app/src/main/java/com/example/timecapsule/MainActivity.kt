@@ -43,6 +43,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
+import com.example.timecapsule.ui.theme.TimeCapsuleTheme
 import com.google.accompanist.flowlayout.FlowRow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -59,7 +60,7 @@ class MainActivity : ComponentActivity() {
         db = AppDatabase.getInstance(this)
 
         setContent {
-            MaterialTheme {
+            TimeCapsuleTheme(dynamicColor = false) {
                 val coroutineScope = rememberCoroutineScope()
                 var reloadNotes by remember { mutableStateOf(false) }
                 val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -95,6 +96,8 @@ fun NoteFlowScreen(
     var notes by remember { mutableStateOf(listOf<Note>()) }
     var showDialog by remember { mutableStateOf<Pair<Boolean, Note?>>(false to null) }
     val context = LocalContext.current
+    val primaryColor = MaterialTheme.colorScheme.primary
+    android.util.Log.d("ThemeDebug", "Primary color: $primaryColor")
 
     // Load notes from db
     LaunchedEffect(reloadTrigger) {
@@ -102,6 +105,7 @@ fun NoteFlowScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.surface,
         floatingActionButton = {
             FloatingActionButton(onClick = onAddNote) {
                 Icon(Icons.Default.Add, contentDescription = "Add Note")
@@ -175,7 +179,7 @@ fun NoteCard(
             .clickable { onClick() }
             .padding(4.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFFAFAFA))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.onSurface)
     ) {
         Box(modifier = Modifier.padding(12.dp)) {
             Column {
@@ -199,7 +203,7 @@ fun NoteCard(
                     .size(20.dp)
                     .align(androidx.compose.ui.Alignment.TopEnd)
             ) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red)
+                Icon(Icons.Default.Delete, contentDescription = "Delete")
             }
         }
     }
