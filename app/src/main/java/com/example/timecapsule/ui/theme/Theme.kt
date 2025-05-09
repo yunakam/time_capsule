@@ -70,7 +70,7 @@ private val LightColorScheme = lightColorScheme(
     error = Color(0xFFffb4ab),
     onError = Color(0xFF690005),
     errorContainer = Color(0xFF93000a),
-    onErrorContainer = Color(0xFFffdad6a),
+    onErrorContainer = Color(0xFFffdad6),
 )
 
 @Composable
