@@ -74,6 +74,7 @@ dependencies {
     implementation(platform(libs.compose.bom))
     implementation(libs.activity.compose)
     implementation(libs.compose.ui)
+    implementation(libs.androidx.compose.ui.text.google.fonts)
     implementation(libs.compose.foundation)
     implementation(libs.compose.foundation.layout)
     implementation(libs.compose.runtime.livedata)

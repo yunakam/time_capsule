@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
+import com.example.compose.AppTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -28,49 +29,52 @@ class EditNoteActivity : ComponentActivity() {
         }
 
         setContent {
-            var note by remember { mutableStateOf<Note?>(null) }
-            var loading by remember { mutableStateOf(true) }
-            var showDeleteDialog by remember { mutableStateOf(false) }
+            AppTheme(dynamicColor = false) {
+                var note by remember { mutableStateOf<Note?>(null) }
+                var loading by remember { mutableStateOf(true) }
+                var showDeleteDialog by remember { mutableStateOf(false) }
 
-            // Load the note from DB
-            LaunchedEffect(noteId) {
-                loading = true
-                note = withContext(Dispatchers.IO) {
-                    db.noteDao().getAll().find { it.id == noteId }
+                // Load the note from DB
+                LaunchedEffect(noteId) {
+                    loading = true
+                    note = withContext(Dispatchers.IO) {
+                        db.noteDao().getAll().find { it.id == noteId }
+                    }
+                    loading = false
+                    if (note == null) finish()
                 }
-                loading = false
-                if (note == null) finish()
-            }
 
-            note?.let { loadedNote ->
-                EditNoteScreen(
-                    note = loadedNote,
-                    onSave = { updatedNote ->
-                        lifecycleScope.launch {
-                            withContext(Dispatchers.IO) {
-                                db.noteDao().update(updatedNote)
+                note?.let { loadedNote ->
+                    EditNoteScreen(
+                        note = loadedNote,
+                        onSave = { updatedNote ->
+                            lifecycleScope.launch {
+                                withContext(Dispatchers.IO) {
+                                    db.noteDao().update(updatedNote)
+                                }
+                                setResult(Activity.RESULT_OK)
+                                finish()
                             }
-                            setResult(Activity.RESULT_OK)
-                            finish()
-                        }
-                    },
-                    onDelete = {
-                        showDeleteDialog = true
-                    },
-                    onClose = { finish() },
-                    showDeleteDialog = showDeleteDialog,
-                    onConfirmDelete = {
-                        lifecycleScope.launch {
-                            withContext(Dispatchers.IO) {
-                                db.noteDao().delete(loadedNote)
+                        },
+                        onDelete = {
+                            showDeleteDialog = true
+                        },
+                        onClose = { finish() },
+                        showDeleteDialog = showDeleteDialog,
+                        onConfirmDelete = {
+                            lifecycleScope.launch {
+                                withContext(Dispatchers.IO) {
+                                    db.noteDao().delete(loadedNote)
+                                }
+                                setResult(Activity.RESULT_OK)
+                                finish()
                             }
-                            setResult(Activity.RESULT_OK)
-                            finish()
-                        }
-                    },
-                    onDismissDeleteDialog = { showDeleteDialog = false }
-                )
+                        },
+                        onDismissDeleteDialog = { showDeleteDialog = false }
+                    )
+                }
             }
         }
+
     }
 }
