@@ -11,6 +11,8 @@ class AddNoteActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setFinishOnTouchOutside(true)
+
         db = AppDatabase.getInstance(this)
 
         setContent {

@@ -21,6 +21,8 @@ class EditNoteActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setFinishOnTouchOutside(true)
+
         db = AppDatabase.getInstance(this)
         val noteId = intent.getLongExtra("note_id", -1L)
         if (noteId == -1L) {
