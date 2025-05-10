@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
@@ -113,7 +114,8 @@ fun EditNoteDialog(
         confirmButton = {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
                     onClick = { showDeleteConfirm = true },
@@ -121,35 +123,34 @@ fun EditNoteDialog(
                 ) {
                     Icon(Icons.Default.Delete, contentDescription = "Delete")
                 }
-                Row {
-                    OutlinedButton(onClick = onDismiss) {
-                        Text("Cancel")
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(
-                        onClick = {
-                            if (text.isNotBlank()) {
-                                onSave(
-                                    note.copy(
-                                        text = text,
-                                        author = author.ifBlank { null },
-                                        sourceTitle = sourceTitle.ifBlank { null },
-                                        sourceUrl = sourceUrl.ifBlank { null },
-                                        page = page.ifBlank { null },
-                                        publisher = publisher.ifBlank { null },
-                                        tags = tags.ifBlank { null }
-                                    )
+                Spacer(modifier = Modifier.width(8.dp))
+                OutlinedButton(onClick = onDismiss) {
+                    Text("Cancel")
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(
+                    onClick = {
+                        if (text.isNotBlank()) {
+                            onSave(
+                                note.copy(
+                                    text = text,
+                                    author = author.ifBlank { null },
+                                    sourceTitle = sourceTitle.ifBlank { null },
+                                    sourceUrl = sourceUrl.ifBlank { null },
+                                    page = page.ifBlank { null },
+                                    publisher = publisher.ifBlank { null },
+                                    tags = tags.ifBlank { null }
                                 )
-                                onDismiss()
-                            }
-                        },
-                        enabled = text.isNotBlank()
-                    ) {
-                        Text("Save")
-                    }
+                            )
+                            onDismiss()
+                        }
+                    },
+                    enabled = text.isNotBlank()
+                ) {
+                    Text("Save")
                 }
             }
         },
-        dismissButton = {}
+//        dismissButton = {}
     )
 }
