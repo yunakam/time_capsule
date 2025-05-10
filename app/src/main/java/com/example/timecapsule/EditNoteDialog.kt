@@ -23,6 +23,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,6 +58,17 @@ fun EditNoteDialog(
         Triple(tags, { v: String -> tags = v }, "Tags (comma separated, optional)")
     )
 
+    // Resets fields every time 'note' changes
+    LaunchedEffect(note) {
+        text = note.text
+        author = note.author ?: ""
+        sourceTitle = note.sourceTitle ?: ""
+        sourceUrl = note.sourceUrl ?: ""
+        page = note.page ?: ""
+        publisher = note.publisher ?: ""
+        tags = note.tags ?: ""
+    }
+
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
@@ -64,9 +76,8 @@ fun EditNoteDialog(
             text = { Text("Are you sure you want to delete this note?") },
             confirmButton = {
                 TextButton(onClick = {
-                    onDelete(note)
                     showDeleteConfirm = false
-                    onDismiss()
+                    onDelete(note)
                 }) { Text("Delete") }
             },
             dismissButton = {

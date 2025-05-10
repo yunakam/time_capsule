@@ -5,9 +5,13 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NoteDao {
+    @Query("SELECT * FROM notes ORDER BY date DESC")
+    fun getAllFlow(): Flow<List<Note>>
+
     @Query("SELECT * FROM notes ORDER BY date DESC")
     suspend fun getAll(): List<Note>
 

@@ -18,4 +18,3 @@ data class Note(
     val tags: String? = null, // store as comma-separated string
     val date: Date = Date()
 )
-
