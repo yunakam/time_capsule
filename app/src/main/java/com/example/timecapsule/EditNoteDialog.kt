@@ -162,6 +162,5 @@ fun EditNoteDialog(
                 }
             }
         },
-//        dismissButton = {}
     )
 }
