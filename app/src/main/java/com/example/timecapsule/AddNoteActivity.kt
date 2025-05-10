@@ -3,7 +3,7 @@ package com.example.timecapsule
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.material3.MaterialTheme
+import com.example.compose.AppTheme
 
 class AddNoteActivity : ComponentActivity() {
 
@@ -14,7 +14,7 @@ class AddNoteActivity : ComponentActivity() {
         db = AppDatabase.getInstance(this)
 
         setContent {
-            MaterialTheme {
+            AppTheme(dynamicColor = false) {
                 AddNoteScreen(
                     db = db,
                     onClose = { finish() },
@@ -26,7 +26,6 @@ class AddNoteActivity : ComponentActivity() {
             }
         }
 
-        // Optionally, set window height as before:
         val window = this.window
         val params = window.attributes
         params.height = (resources.displayMetrics.heightPixels * 0.8).toInt()
