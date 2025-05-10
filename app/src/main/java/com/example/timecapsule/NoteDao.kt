@@ -12,8 +12,9 @@ interface NoteDao {
     @Query("SELECT * FROM notes ORDER BY date DESC")
     fun getAllFlow(): Flow<List<Note>>
 
-    @Query("SELECT * FROM notes ORDER BY date DESC")
-    suspend fun getAll(): List<Note>
+    // no longer necessary as Flow is used instead
+//    @Query("SELECT * FROM notes ORDER BY date DESC")
+//    suspend fun getAll(): List<Note>
 
     @Insert
     suspend fun insert(note: Note): Long
