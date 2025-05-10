@@ -1,11 +1,9 @@
 package com.example.timecapsule
 
-import android.content.Intent
+import AddNoteDialog
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,12 +32,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.lifecycleScope
 import com.example.compose.AppTheme
 import com.google.accompanist.flowlayout.FlowRow
 import kotlinx.coroutines.Dispatchers
@@ -50,107 +48,124 @@ import java.util.Locale
 
 class MainActivity : ComponentActivity() {
 
-    private lateinit var db: AppDatabase
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        db = AppDatabase.getInstance(this)
+        val db = AppDatabase.getInstance(this)
 
         setContent {
             AppTheme(dynamicColor = false) {
-                var reloadNotes by remember { mutableStateOf(false) }
-                val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                    if (result.resultCode == RESULT_OK) {
-                        reloadNotes = !reloadNotes
+                var showAddDialog by remember { mutableStateOf(false) }
+                var showEditDialog by remember { mutableStateOf<Note?>(null) }
+                var showDeleteDialog by remember { mutableStateOf<Note?>(null) }
+                val scope = rememberCoroutineScope()
+                var notes by remember { mutableStateOf(listOf<Note>()) }
+                val context = LocalContext.current
+
+                // Load notes from DB
+                LaunchedEffect(Unit) {
+                    notes = withContext(Dispatchers.IO) { db.noteDao().getAll() }
+                }
+
+                Scaffold(
+                    floatingActionButton = {
+                        FloatingActionButton(onClick = { showAddDialog = true }) {
+                            Icon(Icons.Default.Add, contentDescription = "Add")
+                        }
+                    }
+                ) { padding ->
+                    Column(
+                        Modifier
+                            .padding(padding)
+                            .fillMaxSize()
+                    ) {
+                        FlowRow(
+                            mainAxisSpacing = 12.dp,
+                            crossAxisSpacing = 12.dp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        ) {
+                            notes.forEach { note ->
+                                NoteCard(
+                                    note = note,
+                                    onClick = { showEditDialog = note },
+                                    onDeleteClick = { showDeleteDialog = note }
+                                )
+                            }
+                        }
                     }
                 }
-                NoteFlowScreen(
-                    db = db,
-                    onAddNote = {
-                        val intent = Intent(this, AddNoteActivity::class.java)
-                        launcher.launch(intent)
-                    },
-                    onEditNote = { note ->
-                        val intent = Intent(this, EditNoteActivity::class.java)
-                        intent.putExtra("note_id", note.id)
-                        startActivity(intent)
-                    },
-                    reloadTrigger = reloadNotes
-                )
-            }
-        }
-    }
-}
 
-@Composable
-fun NoteFlowScreen(
-    db: AppDatabase,
-    onAddNote: () -> Unit,
-    onEditNote: (Note) -> Unit,
-    reloadTrigger: Boolean
-) {
-    var notes by remember { mutableStateOf(listOf<Note>()) }
-    var showDialog by remember { mutableStateOf<Pair<Boolean, Note?>>(false to null) }
-    val context = LocalContext.current
+                // Add Note Dialog
+                if (showAddDialog) {
+                    AddNoteDialog(
+                        onSave = { newNote ->
+                            scope.launch {
+                                withContext(Dispatchers.IO) {
+                                    db.noteDao().insert(newNote)
+                                    notes = db.noteDao().getAll()
+                                }
+                                showAddDialog = false
+                            }
+                        },
+                        onDismiss = { showAddDialog = false }
+                    )
+                }
 
-    // Load notes from db
-    LaunchedEffect(reloadTrigger) {
-        notes = withContext(Dispatchers.IO) { db.noteDao().getAll() }
-    }
+                // Edit Note Dialog
+                showEditDialog?.let { noteToEdit ->
+                    EditNoteDialog(
+                        note = noteToEdit,
+                        onSave = { updatedNote ->
+                            scope.launch {
+                                withContext(Dispatchers.IO) {
+                                    db.noteDao().update(updatedNote)
+                                    notes = db.noteDao().getAll()
+                                }
+                                showEditDialog = null
+                            }
+                        },
+                        onDelete = { noteToDelete ->
+                            scope.launch {
+                                withContext(Dispatchers.IO) {
+                                    db.noteDao().delete(noteToDelete)
+                                    notes = db.noteDao().getAll()
+                                }
+                                showEditDialog = null
+                            }
+                        },
+                        onDismiss = { showEditDialog = null }
+                    )
+                }
 
-    Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(onClick = onAddNote) {
-                Icon(Icons.Default.Add, contentDescription = "Add Note")
-            }
-        }
-    ) { padding ->
-        Column(
-            Modifier
-                .padding(padding)
-                .fillMaxSize()
-        ) {
-            FlowRow(
-                mainAxisSpacing = 12.dp,
-                crossAxisSpacing = 12.dp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                notes.forEach { note ->
-                    NoteCard(
-                        note = note,
-                        onClick = { onEditNote(note) },
-                        onDeleteClick = { showDialog = true to note }
+                // Delete Confirmation Dialog
+                showDeleteDialog?.let { noteToDelete ->
+                    AlertDialog(
+                        onDismissRequest = { showDeleteDialog = null },
+                        title = { Text("Delete Note") },
+                        text = { Text("Are you sure you want to delete this note?") },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                scope.launch {
+                                    withContext(Dispatchers.IO) {
+                                        db.noteDao().delete(noteToDelete)
+                                        notes = db.noteDao().getAll()
+                                    }
+                                    showDeleteDialog = null
+                                }
+                            }) { Text("Delete") }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showDeleteDialog = null }) { Text("Cancel") }
+                        }
                     )
                 }
             }
         }
-
-        // Delete confirmation dialog
-        if (showDialog.first && showDialog.second != null) {
-            AlertDialog(
-                onDismissRequest = { showDialog = false to null },
-                title = { Text("Delete Note") },
-                text = { Text("Are you sure you want to delete this note?") },
-                confirmButton = {
-                    TextButton(onClick = {
-                        val noteToDelete = showDialog.second!!
-                        (context as? ComponentActivity)?.lifecycleScope?.launch {
-                            withContext(Dispatchers.IO) { db.noteDao().delete(noteToDelete) }
-                            notes = notes.filter { it.id != noteToDelete.id }
-                        }
-                        showDialog = false to null
-                    }) { Text("Delete") }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showDialog = false to null }) { Text("Cancel") }
-                }
-            )
-        }
     }
 }
 
+// Your NoteCard composable stays the same as before
 @Composable
 fun NoteCard(
     note: Note,
@@ -168,7 +183,7 @@ fun NoteCard(
 
     Card(
         modifier = Modifier
-            .widthIn(min = 100.dp, max = 240.dp)
+            .widthIn(min = 120.dp, max = 240.dp)
             .clickable { onClick() }
             .padding(4.dp),
         shape = RoundedCornerShape(12.dp),
