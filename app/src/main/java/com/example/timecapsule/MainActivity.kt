@@ -101,7 +101,6 @@ fun NoteFlowScreen(
     }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.surface,
         floatingActionButton = {
             FloatingActionButton(onClick = onAddNote) {
                 Icon(Icons.Default.Add, contentDescription = "Add Note")
