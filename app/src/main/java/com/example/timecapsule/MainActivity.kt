@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -33,11 +35,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.compose.AppTheme
+import com.example.compose.surfaceContainerHighLightMediumContrast
+import com.example.compose.surfaceContainerHighestLightMediumContrast
+import com.example.compose.surfaceContainerLightMediumContrast
+import com.example.compose.surfaceContainerLowLightMediumContrast
 import com.example.timecapsule.data.NoteRepository
+import com.google.accompanist.flowlayout.FlowMainAxisAlignment
 import com.google.accompanist.flowlayout.FlowRow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -49,10 +58,10 @@ import java.util.Locale
 fun NoteCard(
     note: Note,
     onClick: () -> Unit,
-    onDeleteClick: () -> Unit
+    onDeleteClick: () -> Unit,
+    backgroundColor: Color
 ) {
     val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
-
     val cleanedText = note.text
         .split("\n")
         .dropLastWhile { it.trim().isEmpty() }
@@ -62,7 +71,7 @@ fun NoteCard(
 
     Card(
         modifier = Modifier
-            .widthIn(min = 120.dp, max = 240.dp)
+            .widthIn(min = 115.dp, max = 240.dp)
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = { onClick() },
@@ -71,20 +80,25 @@ fun NoteCard(
             }
             .padding(4.dp),
         shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = backgroundColor
+        )
     ) {
-        Box(modifier = Modifier.padding(12.dp)) {
+        Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
             Column {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = dateFormat.format(note.createdAt),
-                    style = MaterialTheme.typography.labelSmall,
-                )
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(10.dp))
                 Text(
                     text = previewText,
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 6,
                     overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = dateFormat.format(note.createdAt),
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                    color = MaterialTheme.colorScheme.secondary
                 )
             }
         }
@@ -109,9 +123,38 @@ class MainActivity : ComponentActivity() {
                     NoteRepository(db.noteDao(), db.noteVisitDao())
                 }
 
+                // Color bucket logic: computed per recomposition
+                val sortedNotes = notes.sortedByDescending { it.createdAt }
+                val colorBuckets = listOf(
+                    surfaceContainerLowLightMediumContrast,
+                    surfaceContainerLightMediumContrast,
+                    surfaceContainerHighLightMediumContrast,
+                    surfaceContainerHighestLightMediumContrast
+                )
+                val visitedNotes = notes.filter { it.lastVisitedAt != null } // is not the newly created note
+                    .sortedByDescending { it.lastVisitedAt }
+                val visitedCount = visitedNotes.size
+                val bucketSize = (visitedCount / colorBuckets.size.toFloat()).coerceAtLeast(1f)
+
+                fun colorForNote(note: Note): Color {
+                    return if (note.lastVisitedAt == null) {
+                        colorBuckets[0]
+                    } else {
+                        val recencyIndex = visitedNotes.indexOfFirst { it.id == note.id }
+                        if (recencyIndex == -1) colorBuckets.last() else {
+                            val bucket = (recencyIndex / bucketSize).toInt().coerceIn(0, colorBuckets.lastIndex)
+                            colorBuckets[bucket]
+                        }
+                    }
+                }
+
                 Scaffold(
                     floatingActionButton = {
-                        FloatingActionButton(onClick = { showAddDialog = true }) {
+                        FloatingActionButton(
+                            onClick = { showAddDialog = true },
+                            modifier = Modifier
+                                .offset(y = (-32).dp, x = (-32).dp)
+                        ) {
                             Icon(Icons.Default.Add, contentDescription = "Add")
                         }
                     }
@@ -124,17 +167,19 @@ class MainActivity : ComponentActivity() {
                         FlowRow(
                             mainAxisSpacing = 12.dp,
                             crossAxisSpacing = 12.dp,
+                            mainAxisAlignment = FlowMainAxisAlignment.Center,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(16.dp)
                         ) {
-                            notes.forEach { note ->
+                            sortedNotes.forEachIndexed { _, note ->
                                 androidx.compose.runtime.key(note.id) {
                                     NoteCard(
                                         note = note,
                                         onClick = {
                                             scope.launch {
                                                 withContext(Dispatchers.IO) {
+                                                    // Create a new entry in NoteRepository
                                                     noteRepository.logNoteVisit(note.id)
 
                                                     val updatedNote = db.noteDao().getById(note.id)
@@ -146,7 +191,8 @@ class MainActivity : ComponentActivity() {
                                                 showEditDialogId = note.id
                                             }
                                         },
-                                        onDeleteClick = { showDeleteDialogId = note.id }
+                                        onDeleteClick = { showDeleteDialogId = note.id },
+                                        backgroundColor = colorForNote(note)
                                     )
                                 }
                             }
@@ -159,7 +205,6 @@ class MainActivity : ComponentActivity() {
                     AddNoteDialog(
                         onSave = { newNote ->
                             scope.launch {
-                                // Clear dialog state first!
                                 showAddDialog = false
                                 withContext(Dispatchers.IO) {
                                     db.noteDao().insert(newNote)
@@ -208,7 +253,6 @@ class MainActivity : ComponentActivity() {
                         confirmButton = {
                             TextButton(onClick = {
                                 scope.launch {
-                                    // Clear dialog state first!
                                     showDeleteDialogId = null
                                     withContext(Dispatchers.IO) {
                                         db.noteDao().delete(note)
