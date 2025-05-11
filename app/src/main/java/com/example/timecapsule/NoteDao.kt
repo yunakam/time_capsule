@@ -9,12 +9,11 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NoteDao {
-    @Query("SELECT * FROM notes ORDER BY date DESC")
+    @Query("SELECT * FROM notes ORDER BY createdAt DESC")
     fun getAllFlow(): Flow<List<Note>>
 
-    // no longer necessary as Flow is used instead
-//    @Query("SELECT * FROM notes ORDER BY date DESC")
-//    suspend fun getAll(): List<Note>
+    @Query("SELECT * FROM notes WHERE id = :noteId LIMIT 1")
+    suspend fun getById(noteId: Long): Note?
 
     @Insert
     suspend fun insert(note: Note): Long

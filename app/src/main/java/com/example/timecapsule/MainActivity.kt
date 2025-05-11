@@ -2,6 +2,7 @@ package com.example.timecapsule
 
 import AddNoteDialog
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -36,6 +37,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.compose.AppTheme
+import com.example.timecapsule.data.NoteRepository
 import com.google.accompanist.flowlayout.FlowRow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -74,7 +76,7 @@ fun NoteCard(
             Column {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = dateFormat.format(note.date),
+                    text = dateFormat.format(note.createdAt),
                     style = MaterialTheme.typography.labelSmall,
                 )
                 Spacer(Modifier.height(4.dp))
@@ -103,6 +105,9 @@ class MainActivity : ComponentActivity() {
                 val scope = rememberCoroutineScope()
                 val notesFlow = remember { db.noteDao().getAllFlow() }
                 val notes by notesFlow.collectAsState(initial = emptyList())
+                val noteRepository = remember {
+                    NoteRepository(db.noteDao(), db.noteVisitDao())
+                }
 
                 Scaffold(
                     floatingActionButton = {
@@ -127,7 +132,20 @@ class MainActivity : ComponentActivity() {
                                 androidx.compose.runtime.key(note.id) {
                                     NoteCard(
                                         note = note,
-                                        onClick = { showEditDialogId = note.id },
+                                        onClick = {
+                                            scope.launch {
+                                                withContext(Dispatchers.IO) {
+                                                    noteRepository.logNoteVisit(note.id)
+
+                                                    val updatedNote = db.noteDao().getById(note.id)
+                                                    Log.d(
+                                                        "NoteVisit",
+                                                        "Note id: ${note.id} is visited. Visit count: ${updatedNote?.visitCount ?: "?"}"
+                                                    )
+                                                }
+                                                showEditDialogId = note.id
+                                            }
+                                        },
                                         onDeleteClick = { showDeleteDialogId = note.id }
                                     )
                                 }

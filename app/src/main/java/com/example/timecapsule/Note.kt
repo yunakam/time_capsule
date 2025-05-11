@@ -16,5 +16,8 @@ data class Note(
     val page: String? = null,
     val publisher: String? = null,
     val tags: String? = null, // store as comma-separated string
-    val date: Date = Date()
+
+    val createdAt: Date = Date(),
+    val lastVisitedAt: Date? = null,
+    val visitCount: Int = 0
 )
