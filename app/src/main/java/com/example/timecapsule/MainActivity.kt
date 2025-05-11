@@ -15,6 +15,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -46,8 +49,6 @@ import com.example.compose.surfaceContainerHighestLightMediumContrast
 import com.example.compose.surfaceContainerLightMediumContrast
 import com.example.compose.surfaceContainerLowLightMediumContrast
 import com.example.timecapsule.data.NoteRepository
-import com.google.accompanist.flowlayout.FlowMainAxisAlignment
-import com.google.accompanist.flowlayout.FlowRow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -164,39 +165,36 @@ class MainActivity : ComponentActivity() {
                             .padding(padding)
                             .fillMaxSize()
                     ) {
-                        FlowRow(
-                            mainAxisSpacing = 12.dp,
-                            crossAxisSpacing = 12.dp,
-                            mainAxisAlignment = FlowMainAxisAlignment.Center,
+                        LazyVerticalGrid(
+                            columns = GridCells.Adaptive(minSize = 140.dp), // Or Fixed(2) for 2 columns
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(16.dp)
+                                .padding(16.dp),
+                            verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp),
+                            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp),
                         ) {
-                            sortedNotes.forEachIndexed { _, note ->
-                                androidx.compose.runtime.key(note.id) {
-                                    NoteCard(
-                                        note = note,
-                                        onClick = {
-                                            scope.launch {
-                                                withContext(Dispatchers.IO) {
-                                                    // Create a new entry in NoteRepository
-                                                    noteRepository.logNoteVisit(note.id)
-
-                                                    val updatedNote = db.noteDao().getById(note.id)
-                                                    Log.d(
-                                                        "NoteVisit",
-                                                        "Note id: ${note.id} is visited. Visit count: ${updatedNote?.visitCount ?: "?"}"
-                                                    )
-                                                }
-                                                showEditDialogId = note.id
+                            items(sortedNotes, key = { it.id }) { note ->
+                                NoteCard(
+                                    note = note,
+                                    onClick = {
+                                        scope.launch {
+                                            withContext(Dispatchers.IO) {
+                                                noteRepository.logNoteVisit(note.id)
+                                                val updatedNote = db.noteDao().getById(note.id)
+                                                Log.d(
+                                                    "NoteVisit",
+                                                    "Note id: ${note.id} is visited. Visit count: ${updatedNote?.visitCount ?: "?"}"
+                                                )
                                             }
-                                        },
-                                        onDeleteClick = { showDeleteDialogId = note.id },
-                                        backgroundColor = colorForNote(note)
-                                    )
-                                }
+                                            showEditDialogId = note.id
+                                        }
+                                    },
+                                    onDeleteClick = { showDeleteDialogId = note.id },
+                                    backgroundColor = colorForNote(note)
+                                )
                             }
                         }
+
                     }
                 }
 
