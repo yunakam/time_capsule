@@ -21,7 +21,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -46,7 +45,6 @@ fun EditNoteDialog(
     var page by remember { mutableStateOf(note.page ?: "") }
     var publisher by remember { mutableStateOf(note.publisher ?: "") }
     var tags by remember { mutableStateOf(note.tags ?: "") }
-    var showDeleteConfirm by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
 
     val fields = listOf(
@@ -67,23 +65,6 @@ fun EditNoteDialog(
         page = note.page ?: ""
         publisher = note.publisher ?: ""
         tags = note.tags ?: ""
-    }
-
-    if (showDeleteConfirm) {
-        AlertDialog(
-            onDismissRequest = { showDeleteConfirm = false },
-            title = { Text("Delete Note") },
-            text = { Text("Are you sure you want to delete this note?") },
-            confirmButton = {
-                TextButton(onClick = {
-                    showDeleteConfirm = false
-                    onDelete(note)
-                }) { Text("Delete") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") }
-            }
-        )
     }
 
     AlertDialog(
@@ -129,7 +110,7 @@ fun EditNoteDialog(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
-                    onClick = { showDeleteConfirm = true },
+                    onClick = { onDelete(note) },
                     modifier = Modifier.size(24.dp)
                 ) {
                     Icon(Icons.Default.Delete, contentDescription = "Delete")

@@ -102,6 +102,42 @@ fun NoteCard(
     }
 }
 
+@Composable
+fun DeleteNoteDialog(
+    onDelete: () -> Unit,
+    onDismiss: () -> Unit,
+    containerColor: Color = MaterialTheme.colorScheme.outline,
+    textColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,
+    buttonTextColor: Color = MaterialTheme.colorScheme.outlineVariant
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Delete Note") },
+        text = { Text(
+            "Are you sure you want to delete this note?",
+//            color = textColor
+        ) },
+        confirmButton = {
+            TextButton(onClick = onDelete) {
+                Text(
+                    "Delete",
+//                    color = buttonTextColor
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(
+                    "Cancel",
+//                    color = buttonTextColor
+                )
+            }
+        },
+//        containerColor = containerColor
+    )
+}
+
+
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -113,6 +149,7 @@ class MainActivity : ComponentActivity() {
                 var showAddDialog by remember { mutableStateOf(false) }
                 var showEditDialogId by remember { mutableStateOf<Long?>(null) }
                 var showDeleteDialogId by remember { mutableStateOf<Long?>(null) }
+
                 val scope = rememberCoroutineScope()
                 val notesFlow = remember { db.noteDao().getAllFlow() }
                 val notes by notesFlow.collectAsState(initial = emptyList())
@@ -128,14 +165,14 @@ class MainActivity : ComponentActivity() {
                     MaterialTheme.colorScheme.surfaceContainerHigh,
                     MaterialTheme.colorScheme.surfaceContainerHighest
                 )
-                val visitedNotes = notes.filter { it.lastVisitedAt != null } // is not the newly created note
+                val visitedNotes = notes.filter { it.lastVisitedAt != null } // filter out the newly created note
                     .sortedByDescending { it.lastVisitedAt }
                 val visitedCount = visitedNotes.size
                 val bucketSize = (visitedCount / colorBuckets.size.toFloat()).coerceAtLeast(1f)
 
                 fun colorForNote(note: Note): Color {
                     return if (note.lastVisitedAt == null) {
-                        colorBuckets[0]
+                        colorBuckets[0]  // new card
                     } else {
                         val recencyIndex = visitedNotes.indexOfFirst { it.id == note.id }
                         if (recencyIndex == -1) colorBuckets.last() else {
@@ -162,7 +199,7 @@ class MainActivity : ComponentActivity() {
                             .fillMaxSize()
                     ) {
                         LazyVerticalGrid(
-                            columns = GridCells.Adaptive(minSize = 140.dp), // Or Fixed(2) for 2 columns
+                            columns = GridCells.Adaptive(minSize = 140.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(16.dp),
@@ -211,9 +248,6 @@ class MainActivity : ComponentActivity() {
 
                 // Edit Note Dialog
                 val noteToEdit = notes.find { it.id == showEditDialogId }
-                if (showEditDialogId != null && noteToEdit == null) {
-                    showEditDialogId = null
-                }
                 noteToEdit?.let { note ->
                     EditNoteDialog(
                         note = note,
@@ -227,10 +261,7 @@ class MainActivity : ComponentActivity() {
                         },
                         onDelete = { noteToDelete ->
                             scope.launch {
-                                showEditDialogId = null
-                                withContext(Dispatchers.IO) {
-                                    db.noteDao().delete(noteToDelete)
-                                }
+                                showDeleteDialogId = note.id
                             }
                         },
                         onDismiss = { showEditDialogId = null }
@@ -240,23 +271,18 @@ class MainActivity : ComponentActivity() {
                 // Delete Confirmation Dialog
                 val noteToDelete = notes.find { it.id == showDeleteDialogId }
                 noteToDelete?.let { note ->
-                    AlertDialog(
-                        onDismissRequest = { showDeleteDialogId = null },
-                        title = { Text("Delete Note") },
-                        text = { Text("Are you sure you want to delete this note?") },
-                        confirmButton = {
-                            TextButton(onClick = {
-                                scope.launch {
-                                    showDeleteDialogId = null
-                                    withContext(Dispatchers.IO) {
-                                        db.noteDao().delete(note)
-                                    }
+                    DeleteNoteDialog(
+                        onDelete = {
+                            scope.launch {
+                                withContext(Dispatchers.IO) {
+                                    db.noteDao().delete(note)
                                 }
-                            }) { Text("Delete") }
+                                // Close both Delete and Edit dialogs
+                                showDeleteDialogId = null
+                                showEditDialogId = null
+                            }
                         },
-                        dismissButton = {
-                            TextButton(onClick = { showDeleteDialogId = null }) { Text("Cancel") }
-                        }
+                        onDismiss = { showDeleteDialogId = null },  // only close DeleteDialog
                     )
                 }
             }
