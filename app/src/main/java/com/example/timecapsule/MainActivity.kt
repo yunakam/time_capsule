@@ -44,10 +44,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.compose.AppTheme
-import com.example.compose.surfaceContainerHighLightMediumContrast
-import com.example.compose.surfaceContainerHighestLightMediumContrast
-import com.example.compose.surfaceContainerLightMediumContrast
-import com.example.compose.surfaceContainerLowLightMediumContrast
 import com.example.timecapsule.data.NoteRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -127,10 +123,10 @@ class MainActivity : ComponentActivity() {
                 // Color bucket logic: computed per recomposition
                 val sortedNotes = notes.sortedByDescending { it.createdAt }
                 val colorBuckets = listOf(
-                    surfaceContainerLowLightMediumContrast,
-                    surfaceContainerLightMediumContrast,
-                    surfaceContainerHighLightMediumContrast,
-                    surfaceContainerHighestLightMediumContrast
+                    MaterialTheme.colorScheme.surfaceContainerLow,
+                    MaterialTheme.colorScheme.surfaceContainer,
+                    MaterialTheme.colorScheme.surfaceContainerHigh,
+                    MaterialTheme.colorScheme.surfaceContainerHighest
                 )
                 val visitedNotes = notes.filter { it.lastVisitedAt != null } // is not the newly created note
                     .sortedByDescending { it.lastVisitedAt }
