@@ -1,3 +1,4 @@
+package com.example.timecapsule
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -24,7 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.timecapsule.Note
 
 @Composable
 fun CompactBorderlessTextField(
@@ -82,18 +82,20 @@ fun AddNoteDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add Note") },
+//        title = { Text("Add Note") },
         text = {
             Column(
                 modifier = Modifier
                     .verticalScroll(scrollState)
                     .fillMaxWidth()
             ) {
+                Spacer(modifier = Modifier.height(8.dp))
+
                 // Main note field
                 OutlinedTextField(
                     value = text,
                     onValueChange = { text = it },
-                    label = { Text("Note") },
+                    label = { Text("Add note") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 120.dp),

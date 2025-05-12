@@ -1,6 +1,5 @@
 package com.example.timecapsule
 
-import CompactBorderlessTextField
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,16 +7,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -36,7 +30,8 @@ fun EditNoteDialog(
     note: Note,
     onSave: (Note) -> Unit,
     onDelete: (Note) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onCancelToView: () -> Unit
 ) {
     var text by remember { mutableStateOf(note.text) }
     var author by remember { mutableStateOf(note.author ?: "") }
@@ -69,13 +64,15 @@ fun EditNoteDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edit Note") },
+//        title = { Text("Edit Note") },
         text = {
             Column(
                 modifier = Modifier
                     .verticalScroll(scrollState)
                     .fillMaxWidth()
             ) {
+                Spacer(modifier = Modifier.height(8.dp))
+
                 // Main note field
                 OutlinedTextField(
                     value = text,
@@ -109,14 +106,14 @@ fun EditNoteDialog(
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(
-                    onClick = { onDelete(note) },
-                    modifier = Modifier.size(24.dp)
-                ) {
-                    Icon(Icons.Default.Delete, contentDescription = "Delete")
-                }
+//                IconButton(
+//                    onClick = { onDelete(note) },
+//                    modifier = Modifier.size(24.dp)
+//                ) {
+//                    Icon(Icons.Default.Delete, contentDescription = "Delete")
+//                }
                 Spacer(modifier = Modifier.width(8.dp))
-                OutlinedButton(onClick = onDismiss) {
+                OutlinedButton(onClick = onCancelToView) {
                     Text("Cancel")
                 }
                 Spacer(modifier = Modifier.width(8.dp))

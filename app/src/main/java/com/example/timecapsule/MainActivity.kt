@@ -1,6 +1,5 @@
 package com.example.timecapsule
 
-import AddNoteDialog
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -146,7 +145,8 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             AppTheme(dynamicColor = false) {
-                var showAddDialog by remember { mutableStateOf(false) }
+                var showAddDialog by remember { mutableStateOf(true) }
+                var showViewDialogId by remember { mutableStateOf<Long?>(null) }
                 var showEditDialogId by remember { mutableStateOf<Long?>(null) }
                 var showDeleteDialogId by remember { mutableStateOf<Long?>(null) }
 
@@ -219,7 +219,7 @@ class MainActivity : ComponentActivity() {
                                                     "Note id: ${note.id} is visited. Visit count: ${updatedNote?.visitCount ?: "?"}"
                                                 )
                                             }
-                                            showEditDialogId = note.id
+                                            showViewDialogId = note.id
                                         }
                                     },
                                     onDeleteClick = { showDeleteDialogId = note.id },
@@ -246,6 +246,24 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
+                // View Note Dialog
+                val noteToView = notes.find { it.id == showViewDialogId }
+                noteToView?.let { note ->
+                    NoteViewDialog(
+                        note = note,
+                        onEdit = {
+                            showViewDialogId = null
+                            showEditDialogId = note.id
+                        },
+                        onDelete = { noteToDelete ->
+                            scope.launch {
+                                showDeleteDialogId = note.id
+                            }
+                        },
+                        onDismiss = { showViewDialogId = null }
+                    )
+                }
+
                 // Edit Note Dialog
                 val noteToEdit = notes.find { it.id == showEditDialogId }
                 noteToEdit?.let { note ->
@@ -264,7 +282,11 @@ class MainActivity : ComponentActivity() {
                                 showDeleteDialogId = note.id
                             }
                         },
-                        onDismiss = { showEditDialogId = null }
+                        onDismiss = { showEditDialogId = null },
+                        onCancelToView = {
+                            showEditDialogId = null
+                            showViewDialogId = note.id
+                        }
                     )
                 }
 
