@@ -84,7 +84,6 @@ fun AddNoteDialog(
     var page by remember { mutableStateOf("") }
     var publisher by remember { mutableStateOf("") }
     var tags by remember { mutableStateOf("") }
-    val scrollState = rememberScrollState()
 
     // List of triples: value, onValueChange, label
     val fields = listOf(
