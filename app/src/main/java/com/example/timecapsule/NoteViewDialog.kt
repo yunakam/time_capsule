@@ -81,12 +81,12 @@ fun dataText(
     color: Color = MaterialTheme.colorScheme.outline,
     modifier: Modifier = Modifier
 ) {
-Text(
-    text = text,
-    fontSize = fontSize,
-    color = color
-    )
-}
+    Text(
+        text = text,
+        fontSize = fontSize,
+        color = color
+        )
+    }
 
 @Composable
 fun NoteViewDialog(
