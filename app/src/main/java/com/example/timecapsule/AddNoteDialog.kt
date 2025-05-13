@@ -1,18 +1,25 @@
 package com.example.timecapsule
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -25,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 
 @Composable
 fun CompactBorderlessTextField(
@@ -33,18 +41,25 @@ fun CompactBorderlessTextField(
     label: String,
     modifier: Modifier = Modifier
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isFocused by interactionSource.collectIsFocusedAsState()
+
     TextField(
         value = value,
         onValueChange = onValueChange,
-        label = {
-            Text(
-                label,
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp)
-            )
-        },
+        label = if (value.isEmpty() || isFocused) {
+            {
+                Text(
+                    label,
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp)
+                )
+            }
+        } else null,
         modifier = modifier
             .fillMaxWidth()
+            .height(48.dp)
             .heightIn(min = 24.dp)
+//            .offset(y = (-36).dp)
             .padding(0.dp),
         singleLine = true,
         textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
@@ -52,7 +67,8 @@ fun CompactBorderlessTextField(
             focusedContainerColor = Color.Transparent,
             unfocusedContainerColor = Color.Transparent,
             disabledContainerColor = Color.Transparent,
-        )
+        ),
+        interactionSource = interactionSource
     )
 }
 
@@ -72,79 +88,90 @@ fun AddNoteDialog(
 
     // List of triples: value, onValueChange, label
     val fields = listOf(
-        Triple(author, { v: String -> author = v }, "Author (optional)"),
-        Triple(sourceTitle, { v: String -> sourceTitle = v }, "Source Title (optional)"),
-        Triple(sourceUrl, { v: String -> sourceUrl = v }, "Source URL (optional)"),
-        Triple(page, { v: String -> page = v }, "Page (optional)"),
-        Triple(publisher, { v: String -> publisher = v }, "Publisher (optional)"),
+        Triple(author, { v: String -> author = v }, "Author"),
+        Triple(sourceTitle, { v: String -> sourceTitle = v }, "Source Title"),
+        Triple(sourceUrl, { v: String -> sourceUrl = v }, "Source URL"),
+        Triple(page, { v: String -> page = v }, "Page"),
+        Triple(publisher, { v: String -> publisher = v }, "Publisher"),
         Triple(tags, { v: String -> tags = v }, "Tags (comma separated, optional)")
     )
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-//        title = { Text("Add Note") },
-        text = {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            tonalElevation = 8.dp,
+            color = MaterialTheme.colorScheme.surface
+        )
+        {
             Column(
                 modifier = Modifier
-                    .verticalScroll(scrollState)
-                    .fillMaxWidth()
+                    .widthIn(max = 400.dp)
+                    .heightIn(max = 600.dp)
+                    .padding(24.dp)
             ) {
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Main note field
-                OutlinedTextField(
-                    value = text,
-                    onValueChange = { text = it },
-                    label = { Text("Add note") },
+                // Scrollable text fields
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 120.dp),
-                    singleLine = false,
-                    maxLines = 10,
-                )
+                        .weight(1f, fill = false) // <-- allow to shrink if content is small
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = text,
+                        onValueChange = { text = it },
+                        label = { Text("Add note") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 180.dp),
+                        singleLine = false,
+                        maxLines = 10,
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    fields.forEachIndexed { idx, (value, onChange, label) ->
+                        CompactBorderlessTextField(
+                            value = value,
+                            onValueChange = onChange,
+                            label = label,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 24.dp)
+                        )
+                        if (idx < fields.size - 1) {
+                            Spacer(modifier = Modifier.height(0.dp))
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Loop through all compact fields
-                fields.forEachIndexed { idx, (value, onChange, label) ->
-                    CompactBorderlessTextField(
-                        value = value,
-                        onValueChange = onChange,
-                        label = label,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    if (idx < fields.size - 1) {
-                        Spacer(modifier = Modifier.height(0.dp))
-                    }
+                // Fixed action buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    OutlinedButton(onClick = onDismiss) { Text("Cancel") }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            if (text.isNotBlank()) {
+                                onSave(
+                                    Note(
+                                        text = text,
+                                        author = author.ifBlank { null },
+                                        sourceTitle = sourceTitle.ifBlank { null },
+                                        sourceUrl = sourceUrl.ifBlank { null },
+                                        page = page.ifBlank { null },
+                                        publisher = publisher.ifBlank { null },
+                                        tags = tags.ifBlank { null }
+                                    )
+                                )
+                                onDismiss()
+                            }
+                        },
+                        enabled = text.isNotBlank()
+                    ) { Text("Save") }
                 }
             }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    if (text.isNotBlank()) {
-                        onSave(
-                            Note(
-                                text = text,
-                                author = author.ifBlank { null },
-                                sourceTitle = sourceTitle.ifBlank { null },
-                                sourceUrl = sourceUrl.ifBlank { null },
-                                page = page.ifBlank { null },
-                                publisher = publisher.ifBlank { null },
-                                tags = tags.ifBlank { null }
-                            )
-                        )
-                        onDismiss()
-                    }
-                },
-                enabled = text.isNotBlank()
-            ) {
-                Text("Save")
-            }
-        },
-        dismissButton = {
-            OutlinedButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
         }
-    )
+    }
 }
