@@ -1,8 +1,5 @@
 package com.example.timecapsule.data
 
-import com.example.timecapsule.NoteDao
-import com.example.timecapsule.NoteVisit
-import com.example.timecapsule.NoteVisitDao
 import java.util.Date
 
 class NoteRepository(

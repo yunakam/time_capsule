@@ -1,4 +1,4 @@
-package com.example.timecapsule
+package com.example.timecapsule.ui
 
 import android.os.Bundle
 import android.util.Log
@@ -43,6 +43,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.compose.AppTheme
+import com.example.timecapsule.data.AppDatabase
+import com.example.timecapsule.data.Note
 import com.example.timecapsule.data.NoteRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

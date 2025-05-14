@@ -1,11 +1,6 @@
-package com.example.timecapsule
+package com.example.timecapsule.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,19 +20,17 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.example.timecapsule.data.Note
+import com.example.timecapsule.ui.components.CompactBorderlessTextField
 
 // Stores parameters for the fields using CompactBorderlessTextField
 data class FieldSpec(
@@ -46,83 +39,6 @@ data class FieldSpec(
     val label: String,
     val keyboardOptions: KeyboardOptions = KeyboardOptions.Default
 )
-
-@Composable
-fun CompactBorderlessTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    modifier: Modifier = Modifier,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isFocused by interactionSource.collectIsFocusedAsState()
-    val showFloatingLabel = isFocused || value.isEmpty()
-
-    // Only apply border when focused
-    val borderModifier = if (isFocused) {
-        Modifier
-            .border(
-                width = 1.5.dp,
-                color = MaterialTheme.colorScheme.primary,
-                shape = RoundedCornerShape(20.dp)
-            )
-    } else {
-        Modifier
-    }
-
-    Box(
-        modifier = modifier
-            .then(borderModifier)
-            .fillMaxWidth()
-            .height(48.dp)
-            .padding(0.dp)
-    ) {
-        TextField(
-            value = value,
-            onValueChange = onValueChange,
-            label = if (value.isEmpty() || isFocused) {
-                {
-                    Text(
-                        label,
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 10.sp,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                        ),                    )
-                }
-            } else null,
-            leadingIcon = if (!showFloatingLabel) {
-                {
-                    Text(
-                        label,
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 8.sp,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                        ),
-                        modifier = Modifier.padding(start = 14.dp, end = 4.dp)
-                    )
-                }
-            } else null,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-                .heightIn(min = 24.dp)
-                .background(Color.Transparent),
-            keyboardOptions = keyboardOptions,
-            singleLine = true,
-            textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-                disabledContainerColor = Color.Transparent,
-                focusedIndicatorColor = Color.Transparent,   // Remove underline
-                unfocusedIndicatorColor = Color.Transparent, // Remove underline
-                disabledIndicatorColor = Color.Transparent,  // Remove underline
-            ),
-            interactionSource = interactionSource
-        )
-    }
-}
 
 @Composable
 fun AddNoteDialog(

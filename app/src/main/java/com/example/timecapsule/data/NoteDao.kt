@@ -1,4 +1,4 @@
-package com.example.timecapsule
+package com.example.timecapsule.data
 
 import androidx.room.Dao
 import androidx.room.Delete

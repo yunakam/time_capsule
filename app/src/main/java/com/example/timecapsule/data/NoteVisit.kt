@@ -1,4 +1,4 @@
-package com.example.timecapsule
+package com.example.timecapsule.data
 
 import androidx.room.Entity
 import androidx.room.ForeignKey

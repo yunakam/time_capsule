@@ -1,4 +1,4 @@
-package com.example.timecapsule
+package com.example.timecapsule.data
 
 import android.content.Context
 import androidx.room.Database

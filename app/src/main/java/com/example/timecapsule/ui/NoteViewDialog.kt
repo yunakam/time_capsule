@@ -1,4 +1,4 @@
-package com.example.timecapsule
+package com.example.timecapsule.ui
 
 import android.content.Intent
 import android.net.Uri
@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.timecapsule.data.Note
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

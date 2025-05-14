@@ -1,4 +1,4 @@
-package com.example.timecapsule
+package com.example.timecapsule.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -30,6 +30,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.example.timecapsule.data.Note
+import com.example.timecapsule.ui.components.CompactBorderlessTextField
 
 @Composable
 fun EditNoteDialog(
