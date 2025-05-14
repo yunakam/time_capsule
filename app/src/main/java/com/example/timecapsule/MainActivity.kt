@@ -277,11 +277,12 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         },
-                        onDelete = { noteToDelete ->
-                            scope.launch {
-                                showDeleteDialogId = note.id
-                            }
-                        },
+                        // there is no delete option in EditNoteDialog currently
+//                        onDelete = { noteToDelete ->
+//                            scope.launch {
+//                                showDeleteDialogId = note.id
+//                            }
+//                        },
                         onDismiss = { showEditDialogId = null },
                         onCancelToView = {
                             showEditDialogId = null
