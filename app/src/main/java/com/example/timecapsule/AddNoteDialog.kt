@@ -1,8 +1,11 @@
 package com.example.timecapsule
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -54,33 +57,71 @@ fun CompactBorderlessTextField(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
+    val showFloatingLabel = isFocused || value.isEmpty()
 
-    TextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = if (value.isEmpty() || isFocused) {
-            {
-                Text(
-                    label,
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp)
-                )
-            }
-        } else null,
+    // Only apply border when focused
+    val borderModifier = if (isFocused) {
+        Modifier
+            .border(
+                width = 1.5.dp,
+                color = MaterialTheme.colorScheme.primary,
+                shape = RoundedCornerShape(20.dp)
+            )
+    } else {
+        Modifier
+    }
+
+    Box(
         modifier = modifier
+            .then(borderModifier)
             .fillMaxWidth()
             .height(48.dp)
-            .heightIn(min = 24.dp)
-            .padding(0.dp),
-        keyboardOptions = keyboardOptions,
-        singleLine = true,
-        textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor = Color.Transparent,
-            unfocusedContainerColor = Color.Transparent,
-            disabledContainerColor = Color.Transparent,
-        ),
-        interactionSource = interactionSource
-    )
+            .padding(0.dp)
+    ) {
+        TextField(
+            value = value,
+            onValueChange = onValueChange,
+            label = if (value.isEmpty() || isFocused) {
+                {
+                    Text(
+                        label,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 10.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        ),                    )
+                }
+            } else null,
+            leadingIcon = if (!showFloatingLabel) {
+                {
+                    Text(
+                        label,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 8.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        ),
+                        modifier = Modifier.padding(start = 14.dp, end = 4.dp)
+                    )
+                }
+            } else null,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+                .heightIn(min = 24.dp)
+                .background(Color.Transparent),
+            keyboardOptions = keyboardOptions,
+            singleLine = true,
+            textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                disabledContainerColor = Color.Transparent,
+                focusedIndicatorColor = Color.Transparent,   // Remove underline
+                unfocusedIndicatorColor = Color.Transparent, // Remove underline
+                disabledIndicatorColor = Color.Transparent,  // Remove underline
+            ),
+            interactionSource = interactionSource
+        )
+    }
 }
 
 @Composable
@@ -98,8 +139,12 @@ fun AddNoteDialog(
 
     val fields = listOf(
         FieldSpec(author, { v -> author = v }, "Author"),
-        FieldSpec(sourceTitle, { v -> sourceTitle = v }, "Source Title"),
-        FieldSpec(sourceUrl, { v -> sourceUrl = v }, "Source URL"),
+        FieldSpec(sourceTitle, { v -> sourceTitle = v }, "Title"),
+        FieldSpec(sourceUrl,
+            { v -> sourceUrl = v },
+            "URL",
+            KeyboardOptions(keyboardType = KeyboardType.Uri)
+        ),
         FieldSpec(
             page,
             { v -> page = v.filter { it.isDigit() } },
@@ -126,7 +171,7 @@ fun AddNoteDialog(
                 // Scrollable text fields
                 Column(
                     modifier = Modifier
-                        .weight(1f, fill = false) // <-- allow to shrink if content is small
+                        .weight(1f, fill = false) // allows to shrink if content is small
                         .verticalScroll(rememberScrollState())
                 ) {
                     Spacer(modifier = Modifier.height(12.dp))

@@ -60,8 +60,12 @@ fun EditNoteDialog(
 
     val fields = listOf(
         FieldSpec(author, { v -> author = v }, "Author"),
-        FieldSpec(sourceTitle, { v -> sourceTitle = v }, "Source Title"),
-        FieldSpec(sourceUrl, { v -> sourceUrl = v }, "Source URL"),
+        FieldSpec(sourceTitle, { v -> sourceTitle = v }, "Title"),
+        FieldSpec(sourceUrl,
+            { v -> sourceUrl = v },
+            "URL",
+            KeyboardOptions(keyboardType = KeyboardType.Uri)
+        ),
         FieldSpec(
             page,
             { v -> page = v.filter { it.isDigit() } },
