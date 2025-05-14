@@ -105,9 +105,6 @@ fun NoteCard(
 fun DeleteNoteDialog(
     onDelete: () -> Unit,
     onDismiss: () -> Unit,
-    containerColor: Color = MaterialTheme.colorScheme.outline,
-    textColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,
-    buttonTextColor: Color = MaterialTheme.colorScheme.outlineVariant
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
