@@ -59,7 +59,6 @@ fun CompactBorderlessTextField(
             .fillMaxWidth()
             .height(48.dp)
             .heightIn(min = 24.dp)
-//            .offset(y = (-36).dp)
             .padding(0.dp),
         singleLine = true,
         textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),

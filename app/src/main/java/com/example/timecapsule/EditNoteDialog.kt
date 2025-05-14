@@ -7,13 +7,17 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,15 +25,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 
 @Composable
 fun EditNoteDialog(
     note: Note,
     onSave: (Note) -> Unit,
-    onDelete: (Note) -> Unit,
     onDismiss: () -> Unit,
     onCancelToView: () -> Unit
 ) {
@@ -40,18 +43,8 @@ fun EditNoteDialog(
     var page by remember { mutableStateOf(note.page ?: "") }
     var publisher by remember { mutableStateOf(note.publisher ?: "") }
     var tags by remember { mutableStateOf(note.tags ?: "") }
-    val scrollState = rememberScrollState()
 
-    val fields = listOf(
-        Triple(author, { v: String -> author = v }, "Author (optional)"),
-        Triple(sourceTitle, { v: String -> sourceTitle = v }, "Source Title (optional)"),
-        Triple(sourceUrl, { v: String -> sourceUrl = v }, "Source URL (optional)"),
-        Triple(page, { v: String -> page = v }, "Page (optional)"),
-        Triple(publisher, { v: String -> publisher = v }, "Publisher (optional)"),
-        Triple(tags, { v: String -> tags = v }, "Tags (comma separated, optional)")
-    )
-
-    // Resets fields every time 'note' changes
+    // Reset fields if a different note is loaded
     LaunchedEffect(note) {
         text = note.text
         author = note.author ?: ""
@@ -62,83 +55,91 @@ fun EditNoteDialog(
         tags = note.tags ?: ""
     }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-//        title = { Text("Edit Note") },
-        text = {
+    // List of triples: value, onValueChange, label
+    val fields = listOf(
+        Triple(author, { v: String -> author = v }, "Author"),
+        Triple(sourceTitle, { v: String -> sourceTitle = v }, "Source Title"),
+        Triple(sourceUrl, { v: String -> sourceUrl = v }, "Source URL"),
+        Triple(page, { v: String -> page = v }, "Page"),
+        Triple(publisher, { v: String -> publisher = v }, "Publisher"),
+        Triple(tags, { v: String -> tags = v }, "Tags (comma separated, optional)")
+    )
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            tonalElevation = 8.dp,
+            color = MaterialTheme.colorScheme.surface
+        ) {
             Column(
                 modifier = Modifier
-                    .verticalScroll(scrollState)
-                    .fillMaxWidth()
+                    .widthIn(max = 400.dp)
+                    .heightIn(max = 600.dp)
+                    .padding(24.dp)
             ) {
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Main note field
-                OutlinedTextField(
-                    value = text,
-                    onValueChange = { text = it },
-                    label = { Text("Note") },
+                // Scrollable text fields
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 120.dp),
-                    singleLine = false,
-                    maxLines = 10,
-                )
+                        .weight(1f, fill = false)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = text,
+                        onValueChange = { text = it },
+                        label = { Text("Edit note") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 180.dp),
+                        singleLine = false,
+                        maxLines = 10,
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    fields.forEachIndexed { idx, (value, onChange, label) ->
+                        CompactBorderlessTextField(
+                            value = value,
+                            onValueChange = onChange,
+                            label = label,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 24.dp)
+                        )
+                        if (idx < fields.size - 1) {
+                            Spacer(modifier = Modifier.height(0.dp))
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Loop through all compact fields
-                fields.forEachIndexed { idx, (value, onChange, label) ->
-                    CompactBorderlessTextField(
-                        value = value,
-                        onValueChange = onChange,
-                        label = label,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    if (idx < fields.size - 1) {
-                        Spacer(modifier = Modifier.height(0.dp))
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-//                IconButton(
-//                    onClick = { onDelete(note) },
-//                    modifier = Modifier.size(24.dp)
-//                ) {
-//                    Icon(Icons.Default.Delete, contentDescription = "Delete")
-//                }
-                Spacer(modifier = Modifier.width(8.dp))
-                OutlinedButton(onClick = onCancelToView) {
-                    Text("Cancel")
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                Button(
-                    onClick = {
-                        if (text.isNotBlank()) {
-                            onSave(
-                                note.copy(
-                                    text = text,
-                                    author = author.ifBlank { null },
-                                    sourceTitle = sourceTitle.ifBlank { null },
-                                    sourceUrl = sourceUrl.ifBlank { null },
-                                    page = page.ifBlank { null },
-                                    publisher = publisher.ifBlank { null },
-                                    tags = tags.ifBlank { null }
-                                )
-                            )
-                            onDismiss()
-                        }
-                    },
-                    enabled = text.isNotBlank()
+                // Fixed action buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
                 ) {
-                    Text("Save")
+                    OutlinedButton(onClick = onCancelToView) { Text("Cancel") }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            if (text.isNotBlank()) {
+                                onSave(
+                                    note.copy(
+                                        text = text,
+                                        author = author.ifBlank { null },
+                                        sourceTitle = sourceTitle.ifBlank { null },
+                                        sourceUrl = sourceUrl.ifBlank { null },
+                                        page = page.ifBlank { null },
+                                        publisher = publisher.ifBlank { null },
+                                        tags = tags.ifBlank { null }
+                                    )
+                                )
+                                onDismiss()
+                            }
+                        },
+                        enabled = text.isNotBlank()
+                    ) { Text("Save") }
                 }
             }
-        },
-    )
+        }
+    }
 }
