@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -30,20 +31,24 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.timecapsule.data.Note
-import com.example.timecapsule.ui.components.CompactBorderlessTextField
+import com.example.timecapsule.data.SuggestionDao
+import com.example.timecapsule.ui.components.OptionalTextField
 
 // Stores parameters for the fields using CompactBorderlessTextField
 data class FieldSpec(
     val value: String,
     val onValueChange: (String) -> Unit,
     val label: String,
-    val keyboardOptions: KeyboardOptions = KeyboardOptions.Default
+    val keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    val suggestions: List<String> = emptyList(),
+    val onSuggestionClick: ((String) -> Unit)? = null
 )
 
 @Composable
 fun AddNoteDialog(
     onSave: (Note) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    suggestionDao: SuggestionDao
 ) {
     var text by remember { mutableStateOf("") }
     var author by remember { mutableStateOf("") }
@@ -53,22 +58,61 @@ fun AddNoteDialog(
     var publisher by remember { mutableStateOf("") }
     var tags by remember { mutableStateOf("") }
 
+    // Dynamic suggestions
+    val authorSuggestions by produceState(initialValue = emptyList<String>(), author) {
+        value = suggestionDao.getSuggestions("author", author).map { it.value }
+    }
+    val titleSuggestions by produceState(initialValue = emptyList<String>(), sourceTitle) {
+        value = suggestionDao.getSuggestions("title", sourceTitle).map { it.value }
+    }
+    val publisherSuggestions by produceState(initialValue = emptyList<String>(), publisher) {
+        value = suggestionDao.getSuggestions("publisher", publisher).map { it.value }
+    }
+    val tagSuggestions by produceState(initialValue = emptyList<String>(), tags) {
+        value = suggestionDao.getSuggestions("tag", tags).map { it.value }
+    }
+
     val fields = listOf(
-        FieldSpec(author, { v -> author = v }, "Author"),
-        FieldSpec(sourceTitle, { v -> sourceTitle = v }, "Title"),
-        FieldSpec(sourceUrl,
-            { v -> sourceUrl = v },
-            "URL",
-            KeyboardOptions(keyboardType = KeyboardType.Uri)
+        FieldSpec(
+            value = author,
+            onValueChange = { author = it },
+            label = "Author",
+            suggestions = authorSuggestions,
+            onSuggestionClick = { author = it }
         ),
         FieldSpec(
-            page,
-            { v -> page = v.filter { it.isDigit() } },
-            "Page",
-            KeyboardOptions(keyboardType = KeyboardType.Number)
+            value = sourceTitle,
+            onValueChange = { sourceTitle = it },
+            label = "Title",
+            suggestions = titleSuggestions,
+            onSuggestionClick = { sourceTitle = it }
         ),
-        FieldSpec(publisher, { v -> publisher = v }, "Publisher"),
-        FieldSpec(tags, { v -> tags = v }, "Tags (comma separated, optional)")
+        FieldSpec(
+            value = sourceUrl,
+            onValueChange = { sourceUrl = it },
+            label = "URL",
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)
+        ),
+        FieldSpec(
+            value = page,
+            onValueChange = { page = it.filter { it.isDigit() } },
+            label = "Page",
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+        ),
+        FieldSpec(
+            value = publisher,
+            onValueChange = { publisher = it },
+            label = "Publisher",
+            suggestions = publisherSuggestions,
+            onSuggestionClick = { publisher = it }
+        ),
+        FieldSpec(
+            value = tags,
+            onValueChange = { tags = it },
+            label = "Tags (comma separated, optional)",
+            suggestions = tagSuggestions,
+            onSuggestionClick = { tags = it }
+        )
     )
 
     Dialog(onDismissRequest = onDismiss) {
@@ -102,14 +146,17 @@ fun AddNoteDialog(
                         maxLines = 10,
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    fields.forEachIndexed { idx, (value, onChange, label) ->
-                        CompactBorderlessTextField(
+                    fields.forEachIndexed { idx, (value, onChange, label, keyboardOptions, suggestions, onSuggestionClick) ->
+                        OptionalTextField(
                             value = value,
                             onValueChange = onChange,
                             label = label,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(start = 24.dp)
+                                .padding(start = 24.dp),
+                            keyboardOptions = keyboardOptions,
+                            suggestions = suggestions,
+                            onSuggestionClick = onSuggestionClick
                         )
                         if (idx < fields.size - 1) {
                             Spacer(modifier = Modifier.height(0.dp))

@@ -31,7 +31,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.timecapsule.data.Note
-import com.example.timecapsule.ui.components.CompactBorderlessTextField
+import com.example.timecapsule.ui.components.OptionalTextField
 
 @Composable
 fun EditNoteDialog(
@@ -109,7 +109,7 @@ fun EditNoteDialog(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     fields.forEachIndexed { idx, (value, onChange, label) ->
-                        CompactBorderlessTextField(
+                        OptionalTextField(
                             value = value,
                             onValueChange = onChange,
                             label = label,

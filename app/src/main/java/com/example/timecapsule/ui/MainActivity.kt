@@ -46,6 +46,7 @@ import com.example.compose.AppTheme
 import com.example.timecapsule.data.AppDatabase
 import com.example.timecapsule.data.Note
 import com.example.timecapsule.data.NoteRepository
+import com.example.timecapsule.data.Suggestion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -140,6 +141,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         val db = AppDatabase.getInstance(this)
 
         setContent {
@@ -155,6 +157,9 @@ class MainActivity : ComponentActivity() {
                 val noteRepository = remember {
                     NoteRepository(db.noteDao(), db.noteVisitDao())
                 }
+
+                val suggestionDao = db.suggestionDao()
+
 
                 // Color bucket logic: computed per recomposition
                 val sortedNotes = notes.sortedByDescending { it.createdAt }
@@ -238,10 +243,42 @@ class MainActivity : ComponentActivity() {
                                 showAddDialog = false
                                 withContext(Dispatchers.IO) {
                                     db.noteDao().insert(newNote)
+
+                                    // Insert suggestions if provided
+                                    newNote.author?.let { author ->
+                                        if (author.isNotBlank()) {
+                                            db.suggestionDao().insert(
+                                                Suggestion(type = "author", value = author)
+                                            )
+                                        }
+                                    }
+                                    newNote.sourceTitle?.let { title ->
+                                        if (title.isNotBlank()) {
+                                            db.suggestionDao().insert(
+                                                Suggestion(type = "title", value = title)
+                                            )
+                                        }
+                                    }
+                                    newNote.publisher?.let { publisher ->
+                                        if (publisher.isNotBlank()) {
+                                            db.suggestionDao().insert(
+                                                Suggestion(type = "publisher", value = publisher)
+                                            )
+                                        }
+                                    }
+                                    newNote.tags?.let { tags ->
+                                        tags.split(",").map { it.trim() }.filter { it.isNotBlank() }.forEach { tag ->
+                                            db.suggestionDao().insert(
+                                                Suggestion(type = "tag", value = tag)
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         },
-                        onDismiss = { showAddDialog = false }
+
+                        onDismiss = { showAddDialog = false },
+                        suggestionDao = suggestionDao
                     )
                 }
 
@@ -254,7 +291,7 @@ class MainActivity : ComponentActivity() {
                             showViewDialogId = null
                             showEditDialogId = note.id
                         },
-                        onDelete = { noteToDelete ->
+                        onDelete = { _ ->
                             scope.launch {
                                 showDeleteDialogId = note.id
                             }

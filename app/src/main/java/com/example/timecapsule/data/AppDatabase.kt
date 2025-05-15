@@ -7,14 +7,15 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
 @Database(
-    entities = [Note::class, NoteVisit::class],
-    version = 1,
+    entities = [Note::class, NoteVisit::class, Suggestion::class],
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun noteDao(): NoteDao
     abstract fun noteVisitDao(): NoteVisitDao
+    abstract fun suggestionDao(): SuggestionDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
@@ -25,7 +26,10 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "notes.db"
-                ).build().also { INSTANCE = it }
+                )
+                .fallbackToDestructiveMigration() // wipes old database and creates a new one
+                .build()
+                .also { INSTANCE = it }
             }
     }
 }
