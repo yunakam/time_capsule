@@ -32,19 +32,23 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.timecapsule.data.Note
+import com.example.timecapsule.ui.components.TagChip
+import com.google.accompanist.flowlayout.FlowRow
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+
 
 @Composable
 fun metaText(
     text: String,
     fontSize: TextUnit = 14.sp,
-    color: Color = MaterialTheme.colorScheme.outline,
+    color: Color = MaterialTheme.colorScheme.secondary,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -109,13 +113,21 @@ fun NoteViewDialog(
                         .fillMaxWidth()
                         .verticalScroll(rememberScrollState())
                         .padding(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(note.text, style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        note.text,
+                        style = MaterialTheme.typography.bodyLarge,
+                        maxLines = 6,
+                        overflow = TextOverflow.Ellipsis
+                    )
                     Spacer(Modifier.height(12.dp))
 
                     // Optional fields with left padding
-                    Column(modifier = Modifier.padding(start = 16.dp)) {
+                    Column(
+                        modifier = Modifier.padding(start = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
                         note.author?.takeIf { it.isNotBlank() }?.let {
                             metaText("- $it", fontSize = 16.sp)
                         }
@@ -132,15 +144,27 @@ fun NoteViewDialog(
                         note.publisher?.takeIf { it.isNotBlank() }?.let {
                             metaText("Publisher: $it")
                         }
-                        note.tags?.takeIf { it.isNotEmpty() }?.let {
-                            metaText("Tags: ${formatTags(it)}")
+                        Spacer(Modifier.height(8.dp))
+                        note.tags?.takeIf { it.isNotEmpty() }?.let { tags ->
+                            FlowRow(
+                                mainAxisSpacing = 8.dp,
+                                crossAxisSpacing = 8.dp,
+                                modifier = Modifier.padding(top = 4.dp, bottom = 4.dp)
+                            ) {
+                                tags.forEach { tag ->
+                                    TagChip(tag = tag, icon = true, removable = false)
+                                }
+                            }
                         }
+
                         Spacer(Modifier.height(24.dp))
-                        dataText("Created: ${formatDate(note.createdAt)}")
-                        note.lastVisitedAt?.let {
-                            dataText("Last Visited: ${formatDate(it)}")
+                        Column(modifier = Modifier.padding(start = 48.dp),) {
+                            dataText("Created: ${formatDate(note.createdAt)}")
+                            note.lastVisitedAt?.let {
+                                dataText("Last Visited: ${formatDate(it)}")
+                            }
+                            dataText("Visited: ${note.visitCount}")
                         }
-                        dataText("Visited: ${note.visitCount}")
                     }
                 }
             }

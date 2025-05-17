@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -51,12 +52,13 @@ fun OptionalTextField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
     suggestions: List<String> = emptyList(),
     onSuggestionClick: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier
         .fillMaxWidth()
         .padding(start = 24.dp),
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
@@ -107,7 +109,7 @@ fun OptionalTextField(
                     Text(
                         label,
                         style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 8.sp,
+                            fontSize = 10.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         ),
                         modifier = Modifier.padding(start = 14.dp, end = 4.dp)
@@ -123,6 +125,7 @@ fun OptionalTextField(
                     textFieldWidth = coordinates.size.width
                 },
             keyboardOptions = keyboardOptions,
+            keyboardActions = keyboardActions,
             singleLine = true,
             textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
             colors = TextFieldDefaults.colors(
@@ -217,7 +220,7 @@ fun OptionalTextField_backup(
                     Text(
                         label,
                         style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 8.sp,
+                            fontSize = 10.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         ),
                         modifier = Modifier.padding(start = 14.dp, end = 4.dp)
