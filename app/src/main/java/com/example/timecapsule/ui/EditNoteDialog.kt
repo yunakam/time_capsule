@@ -31,7 +31,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.timecapsule.data.Note
+import com.example.timecapsule.data.NoteDao
+import com.example.timecapsule.ui.components.FieldSpec
 import com.example.timecapsule.ui.components.OptionalTextField
+import com.example.timecapsule.ui.components.rememberSuggestions
 
 @Composable
 fun EditNoteDialog(
@@ -39,8 +42,9 @@ fun EditNoteDialog(
     onSave: (Note) -> Unit,
 //    onDelete: (Note) -> Unit,
     onDismiss: () -> Unit,
-    onCancelToView: () -> Unit
-) {
+    onCancelToView: () -> Unit,
+    noteDao: NoteDao
+    ) {
     var text by remember { mutableStateOf(note.text) }
     var author by remember { mutableStateOf(note.author ?: "") }
     var sourceTitle by remember { mutableStateOf(note.sourceTitle ?: "") }
@@ -48,6 +52,12 @@ fun EditNoteDialog(
     var page by remember { mutableStateOf(note.page ?: "") }
     var publisher by remember { mutableStateOf(note.publisher ?: "") }
     var tags by remember { mutableStateOf(note.tags ?: "") }
+
+    // Dynamic suggestions
+    val authorSuggestions by rememberSuggestions(author) { noteDao.getAuthorSuggestions(it) }
+    val titleSuggestions by rememberSuggestions(sourceTitle) { noteDao.getTitleSuggestions(it) }
+    val publisherSuggestions by rememberSuggestions(publisher) { noteDao.getPublisherSuggestions(it) }
+    val tagSuggestions by rememberSuggestions(tags) { noteDao.getTagSuggestions(it) }
 
     // Reset fields if a different note is loaded
     LaunchedEffect(note) {
@@ -61,22 +71,64 @@ fun EditNoteDialog(
     }
 
     val fields = listOf(
-        FieldSpec(author, { v -> author = v }, "Author"),
-        FieldSpec(sourceTitle, { v -> sourceTitle = v }, "Title"),
-        FieldSpec(sourceUrl,
-            { v -> sourceUrl = v },
-            "URL",
-            KeyboardOptions(keyboardType = KeyboardType.Uri)
+        FieldSpec(
+            value = author,
+            onValueChange = { author = it },
+            label = "Author",
+            suggestions = authorSuggestions,
+            onSuggestionClick = { author = it }
         ),
         FieldSpec(
-            page,
-            { v -> page = v.filter { it.isDigit() } },
-            "Page",
-            KeyboardOptions(keyboardType = KeyboardType.Number)
+            value = sourceTitle,
+            onValueChange = { sourceTitle = it },
+            label = "Title",
+            suggestions = titleSuggestions,
+            onSuggestionClick = { sourceTitle = it }
         ),
-        FieldSpec(publisher, { v -> publisher = v }, "Publisher"),
-        FieldSpec(tags, { v -> tags = v }, "Tags (comma separated, optional)")
+        FieldSpec(
+            value = sourceUrl,
+            onValueChange = { sourceUrl = it },
+            label = "URL",
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)
+        ),
+        FieldSpec(
+            value = page,
+            onValueChange = { page = it.filter { it.isDigit() } },
+            label = "Page",
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+        ),
+        FieldSpec(
+            value = publisher,
+            onValueChange = { publisher = it },
+            label = "Publisher",
+            suggestions = publisherSuggestions,
+            onSuggestionClick = { publisher = it }
+        ),
+        FieldSpec(
+            value = tags,
+            onValueChange = { tags = it },
+            label = "Tags (comma separated, optional)",
+            suggestions = tagSuggestions,
+            onSuggestionClick = { tags = it }
+        )
     )
+//    val fields = listOf(
+//        FieldSpec(author, { v -> author = v }, "Author"),
+//        FieldSpec(sourceTitle, { v -> sourceTitle = v }, "Title"),
+//        FieldSpec(sourceUrl,
+//            { v -> sourceUrl = v },
+//            "URL",
+//            KeyboardOptions(keyboardType = KeyboardType.Uri)
+//        ),
+//        FieldSpec(
+//            page,
+//            { v -> page = v.filter { it.isDigit() } },
+//            "Page",
+//            KeyboardOptions(keyboardType = KeyboardType.Number)
+//        ),
+//        FieldSpec(publisher, { v -> publisher = v }, "Publisher"),
+//        FieldSpec(tags, { v -> tags = v }, "Tags (comma separated, optional)")
+//    )
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -108,14 +160,15 @@ fun EditNoteDialog(
                         maxLines = 10,
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    fields.forEachIndexed { idx, (value, onChange, label) ->
+                    fields.forEachIndexed { idx, (value, onChange, label, keyboardOptions, suggestions, onSuggestionClick) ->
                         OptionalTextField(
                             value = value,
                             onValueChange = onChange,
                             label = label,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(start = 24.dp)
+                            modifier = Modifier,
+                            keyboardOptions = keyboardOptions,
+                            suggestions = suggestions,
+                            onSuggestionClick = onSuggestionClick
                         )
                         if (idx < fields.size - 1) {
                             Spacer(modifier = Modifier.height(0.dp))

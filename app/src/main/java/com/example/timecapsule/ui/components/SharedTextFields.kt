@@ -19,8 +19,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -30,6 +32,30 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+// Stores parameters for the fields using CompactBorderlessTextField
+data class FieldSpec(
+    val value: String,
+    val onValueChange: (String) -> Unit,
+    val label: String,
+    val keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    val suggestions: List<String> = emptyList(),
+    val onSuggestionClick: ((String) -> Unit)? = null
+)
+
+@Composable
+fun <T> rememberSuggestions(
+    query: String,
+    suggestionProvider: suspend (String) -> List<T>
+): State<List<T>> {
+    return produceState(initialValue = emptyList(), query) {
+        value = if (query.isNotBlank()) {
+            suggestionProvider(query)
+        } else {
+            emptyList()
+        }
+    }
+}
+
 @Composable
 fun OptionalTextField(
     value: String,
@@ -37,7 +63,9 @@ fun OptionalTextField(
     label: String,
     suggestions: List<String> = emptyList(),
     onSuggestionClick: ((String) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
+        .fillMaxWidth()
+        .padding(start = 24.dp),
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default
 ) {
     val interactionSource = remember { MutableInteractionSource() }

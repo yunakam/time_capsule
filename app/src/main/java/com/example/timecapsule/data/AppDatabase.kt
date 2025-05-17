@@ -7,15 +7,14 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
 @Database(
-    entities = [Note::class, NoteVisit::class, Suggestion::class],
-    version = 2,
+    entities = [Note::class, NoteVisit::class],
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun noteDao(): NoteDao
     abstract fun noteVisitDao(): NoteVisitDao
-    abstract fun suggestionDao(): SuggestionDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null

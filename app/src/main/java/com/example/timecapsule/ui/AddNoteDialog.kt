@@ -23,7 +23,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -31,24 +30,16 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.timecapsule.data.Note
-import com.example.timecapsule.data.SuggestionDao
+import com.example.timecapsule.data.NoteDao
+import com.example.timecapsule.ui.components.FieldSpec
 import com.example.timecapsule.ui.components.OptionalTextField
-
-// Stores parameters for the fields using CompactBorderlessTextField
-data class FieldSpec(
-    val value: String,
-    val onValueChange: (String) -> Unit,
-    val label: String,
-    val keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    val suggestions: List<String> = emptyList(),
-    val onSuggestionClick: ((String) -> Unit)? = null
-)
+import com.example.timecapsule.ui.components.rememberSuggestions
 
 @Composable
 fun AddNoteDialog(
     onSave: (Note) -> Unit,
     onDismiss: () -> Unit,
-    suggestionDao: SuggestionDao
+    noteDao: NoteDao
 ) {
     var text by remember { mutableStateOf("") }
     var author by remember { mutableStateOf("") }
@@ -59,18 +50,10 @@ fun AddNoteDialog(
     var tags by remember { mutableStateOf("") }
 
     // Dynamic suggestions
-    val authorSuggestions by produceState(initialValue = emptyList<String>(), author) {
-        value = suggestionDao.getSuggestions("author", author).map { it.value }
-    }
-    val titleSuggestions by produceState(initialValue = emptyList<String>(), sourceTitle) {
-        value = suggestionDao.getSuggestions("title", sourceTitle).map { it.value }
-    }
-    val publisherSuggestions by produceState(initialValue = emptyList<String>(), publisher) {
-        value = suggestionDao.getSuggestions("publisher", publisher).map { it.value }
-    }
-    val tagSuggestions by produceState(initialValue = emptyList<String>(), tags) {
-        value = suggestionDao.getSuggestions("tag", tags).map { it.value }
-    }
+    val authorSuggestions by rememberSuggestions(author) { noteDao.getAuthorSuggestions(it) }
+    val titleSuggestions by rememberSuggestions(sourceTitle) { noteDao.getTitleSuggestions(it) }
+    val publisherSuggestions by rememberSuggestions(publisher) { noteDao.getPublisherSuggestions(it) }
+    val tagSuggestions by rememberSuggestions(tags) { noteDao.getTagSuggestions(it) }
 
     val fields = listOf(
         FieldSpec(
@@ -151,9 +134,7 @@ fun AddNoteDialog(
                             value = value,
                             onValueChange = onChange,
                             label = label,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(start = 24.dp),
+                            modifier = Modifier,
                             keyboardOptions = keyboardOptions,
                             suggestions = suggestions,
                             onSuggestionClick = onSuggestionClick
