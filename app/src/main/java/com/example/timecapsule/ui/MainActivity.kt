@@ -46,6 +46,7 @@ import com.example.compose.AppTheme
 import com.example.timecapsule.data.AppDatabase
 import com.example.timecapsule.data.Note
 import com.example.timecapsule.data.NoteRepository
+import com.example.timecapsule.ui.components.NoteDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -236,7 +237,8 @@ class MainActivity : ComponentActivity() {
 
                 // Add Note Dialog
                 if (showAddDialog) {
-                    AddNoteDialog(
+                    NoteDialog(
+                        initialNote = Note(),
                         onSave = { newNote ->
                             scope.launch {
                                 showAddDialog = false
@@ -271,8 +273,8 @@ class MainActivity : ComponentActivity() {
                 // Edit Note Dialog
                 val noteToEdit = notes.find { it.id == showEditDialogId }
                 noteToEdit?.let { note ->
-                    EditNoteDialog(
-                        note = note,
+                    NoteDialog(
+                        initialNote = note,
                         onSave = { updatedNote ->
                             scope.launch {
                                 showEditDialogId = null
@@ -288,7 +290,7 @@ class MainActivity : ComponentActivity() {
 //                            }
 //                        },
                         onDismiss = { showEditDialogId = null },
-                        onCancelToView = {
+                        onCancel = {
                             showEditDialogId = null
                             showViewDialogId = note.id
                         },
