@@ -2,7 +2,7 @@ package com.example.timecapsule.ui.components
 
 import androidx.compose.foundation.text.KeyboardOptions
 
-// Stores parameters for the fields using CompactBorderlessTextField
+// Stores parameters for the fields using OptionalTextField
 data class FieldSpec(
     val value: String,
     val onValueChange: (String) -> Unit,

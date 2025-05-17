@@ -27,6 +27,7 @@ interface NoteDao {
     @Query("DELETE FROM notes WHERE id = :noteId")
     suspend fun deleteById(noteId: Long)
 
+
     // Get suggestion as per user's input
     @Query("SELECT DISTINCT author FROM notes WHERE author LIKE :query || '%' ORDER BY author LIMIT 10")
     suspend fun getAuthorSuggestions(query: String): List<String>
@@ -37,6 +38,20 @@ interface NoteDao {
     @Query("SELECT DISTINCT publisher FROM notes WHERE publisher LIKE :query || '%' ORDER BY publisher LIMIT 10")
     suspend fun getPublisherSuggestions(query: String): List<String>
 
-    @Query("SELECT DISTINCT tags FROM notes WHERE tags LIKE :query || '%' ORDER BY publisher LIMIT 10")
-    suspend fun getTagSuggestions(query: String): List<String>
+    @Query("SELECT tags FROM notes")
+    suspend fun getAllTagsRaw(): List<String?>
+
+
+    // Get notes by key
+    @Query("SELECT * FROM notes WHERE author = :author")
+    suspend fun getNotesByAuthor(author: String): List<Note>
+
+    @Query("SELECT * FROM notes WHERE sourceTitle = :title")
+    suspend fun getNotesByTitle(title: String): List<Note>
+
+    @Query("SELECT * FROM notes WHERE publisher = :publisher")
+    suspend fun getNotesByPublisher(publisher: String): List<Note>
+
+    @Query("SELECT * FROM notes WHERE tags LIKE '%' || :tag || '%'")
+    suspend fun getNotesByTagRaw(tag: String): List<Note>
 }

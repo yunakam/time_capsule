@@ -11,8 +11,10 @@ class Converters {
     fun dateToTimestamp(date: Date?): Long? = date?.time
 
     @TypeConverter
-    fun fromTags(tags: String?): List<String>? = tags?.split(",")?.map { it.trim() }
+    fun fromTags(tags: String?): List<String>? =
+        tags?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }
 
     @TypeConverter
-    fun tagsToString(tags: List<String>?): String? = tags?.joinToString(",")
+    fun tagsToString(tags: List<String>?): String? =
+        tags?.filter { it.isNotEmpty() }?.joinToString(",")
 }

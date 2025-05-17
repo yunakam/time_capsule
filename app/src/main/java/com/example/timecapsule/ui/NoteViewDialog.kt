@@ -132,7 +132,7 @@ fun NoteViewDialog(
                         note.publisher?.takeIf { it.isNotBlank() }?.let {
                             metaText("Publisher: $it")
                         }
-                        note.tags?.takeIf { it.isNotBlank() }?.let {
+                        note.tags?.takeIf { it.isNotEmpty() }?.let {
                             metaText("Tags: ${formatTags(it)}")
                         }
                         Spacer(Modifier.height(24.dp))
@@ -167,5 +167,5 @@ fun NoteViewDialog(
 fun formatDate(date: Date?): String =
     date?.let { SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(it) } ?: "-"
 
-fun formatTags(tags: String?): String =
-    tags?.split(",")?.joinToString(", ") { it.trim() }?.takeIf { it.isNotBlank() } ?: "-"
+fun formatTags(tags: List<String>?): String =
+    tags?.joinToString(", ")?.takeIf { it.isNotBlank() } ?: "-"

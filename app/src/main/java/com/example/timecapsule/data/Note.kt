@@ -15,8 +15,7 @@ data class Note(
     val sourceUrl: String? = null,
     val page: String? = null,
     val publisher: String? = null,
-    val tags: String? = null, // store as comma-separated string
-//    val tags: List<String>? = null, // store as a list
+    val tags: List<String>? = null, // store as a list
 
     val createdAt: Date = Date(),
     val lastVisitedAt: Date? = null,

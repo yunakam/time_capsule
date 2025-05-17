@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -35,12 +36,12 @@ import com.example.timecapsule.data.NoteDao
 
 @Composable
 fun NoteDialog(
-    title: String,
+    title: String = "",
     initialNote: Note = Note(), // Use a default empty note for Add
     onSave: (Note) -> Unit,
     onDismiss: () -> Unit,
     noteDao: NoteDao,
-    cancelButtonAction: (() -> Unit)? = null, // For Edit: onCancelToView, for Add: onDismiss
+    onCancel: (() -> Unit)? = null, // For Edit: onCancelToView, for Add: onDismiss
 ) {
     var text by remember { mutableStateOf(initialNote.text) }
     var author by remember { mutableStateOf(initialNote.author ?: "") }
@@ -48,9 +49,9 @@ fun NoteDialog(
     var sourceUrl by remember { mutableStateOf(initialNote.sourceUrl ?: "") }
     var page by remember { mutableStateOf(initialNote.page ?: "") }
     var publisher by remember { mutableStateOf(initialNote.publisher ?: "") }
-    var tags by remember { mutableStateOf(initialNote.tags ?: "") }
+    var tags by remember { mutableStateOf(initialNote.tags?.joinToString(", ") ?: "") }
 
-    // For EditNoteDialog: reset fields when note changes
+    // For Edit: reset fields when note changes
     LaunchedEffect(initialNote) {
         text = initialNote.text
         author = initialNote.author ?: ""
@@ -58,13 +59,39 @@ fun NoteDialog(
         sourceUrl = initialNote.sourceUrl ?: ""
         page = initialNote.page ?: ""
         publisher = initialNote.publisher ?: ""
-        tags = initialNote.tags ?: ""
+        tags = initialNote.tags?.joinToString(", ") ?: ""
     }
 
     val authorSuggestions by rememberSuggestions(author) { noteDao.getAuthorSuggestions(it) }
     val titleSuggestions by rememberSuggestions(sourceTitle) { noteDao.getTitleSuggestions(it) }
     val publisherSuggestions by rememberSuggestions(publisher) { noteDao.getPublisherSuggestions(it) }
-    val tagSuggestions by rememberSuggestions(tags) { noteDao.getTagSuggestions(it) }
+
+    // TAG SUGGESTION LOGIC //
+    val allTagsRaw by produceState(initialValue = emptyList<String?>()) {
+        value = noteDao.getAllTagsRaw()
+    }
+    val allTags = allTagsRaw
+        .filterNotNull()
+        .flatMap { it.split(",") }
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+        .distinct()
+
+    // Split by comma, trim, get the last fragment being typed
+    val tagFragments = tags.split(",").map { it.trim() }
+    val currentInput = tagFragments.lastOrNull() ?: ""
+    val alreadySelected = tagFragments.dropLast(1).filter { it.isNotEmpty() }
+
+    val tagSuggestions = if (currentInput.isNotBlank()) {
+        allTags
+            .filter {
+                it.startsWith(currentInput, ignoreCase = true) &&
+                        it !in alreadySelected
+            }
+            .take(10)
+    } else {
+        emptyList()
+    }
 
     val fields = listOf(
         FieldSpec(author, { author = it }, "Author", suggestions = authorSuggestions, onSuggestionClick = { author = it }),
@@ -72,7 +99,10 @@ fun NoteDialog(
         FieldSpec(sourceUrl, { sourceUrl = it }, "URL", keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)),
         FieldSpec(page, { page = it.filter { it.isDigit() } }, "Page", keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)),
         FieldSpec(publisher, { publisher = it }, "Publisher", suggestions = publisherSuggestions, onSuggestionClick = { publisher = it }),
-        FieldSpec(tags, { tags = it }, "Tags (comma separated, optional)", suggestions = tagSuggestions, onSuggestionClick = { tags = it })
+        FieldSpec(tags, { tags = it }, "Tags", suggestions = tagSuggestions, onSuggestionClick = { selected ->
+            tags = appendTag(tags, selected)
+        })
+
     )
 
     Dialog(onDismissRequest = onDismiss) {
@@ -125,7 +155,7 @@ fun NoteDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    OutlinedButton(onClick = cancelButtonAction ?: onDismiss) { Text("Cancel") }
+                    OutlinedButton(onClick = onCancel ?: onDismiss) { Text("Cancel") }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = {
@@ -137,7 +167,11 @@ fun NoteDialog(
                                     sourceUrl = sourceUrl.ifBlank { null },
                                     page = page.ifBlank { null },
                                     publisher = publisher.ifBlank { null },
-                                    tags = tags.ifBlank { null }
+//                                    tags = tags.ifBlank { null }
+                                    tags = tags.split(",")
+                                        .map { it.trim() }
+                                        .filter { it.isNotEmpty() }
+                                        .takeIf { it.isNotEmpty() }
                                 )
                                 onSave(newNote)
                                 onDismiss()
@@ -149,4 +183,13 @@ fun NoteDialog(
             }
         }
     }
+}
+
+
+// Append the tag selected from the suggestion
+private fun appendTag(current: String, selected: String): String {
+    val fragments = current.split(",").map { it.trim() }
+    val already = fragments.dropLast(1).filter { it.isNotEmpty() }
+    val newTags = already + selected
+    return if (newTags.isEmpty()) "" else newTags.joinToString(", ") + ", "
 }
