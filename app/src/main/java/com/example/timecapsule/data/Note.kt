@@ -9,7 +9,7 @@ import java.util.Date
 @TypeConverters(Converters::class)
 data class Note(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val text: String,
+    val text: String = "",
     val author: String? = null,
     val sourceTitle: String? = null,
     val sourceUrl: String? = null,

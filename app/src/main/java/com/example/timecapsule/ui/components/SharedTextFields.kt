@@ -32,16 +32,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// Stores parameters for the fields using CompactBorderlessTextField
-data class FieldSpec(
-    val value: String,
-    val onValueChange: (String) -> Unit,
-    val label: String,
-    val keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    val suggestions: List<String> = emptyList(),
-    val onSuggestionClick: ((String) -> Unit)? = null
-)
-
 @Composable
 fun <T> rememberSuggestions(
     query: String,
