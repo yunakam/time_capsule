@@ -1,5 +1,7 @@
 package com.example.timecapsule.ui
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,10 +28,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.LastBaseline
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,19 +45,67 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-
 @Composable
 fun metaText(
     text: String,
     fontSize: TextUnit = 14.sp,
     color: Color = MaterialTheme.colorScheme.secondary,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    maxLines: Int = 2,
+    overflow: TextOverflow = TextOverflow.Ellipsis,
 ) {
+    val context = LocalContext.current
+    val isUrl = text.startsWith("http://") || text.startsWith("https://")
+
+    if (isUrl) {
+        Text(
+            text = text,
+            fontSize = fontSize,
+            color = color,
+            textDecoration = TextDecoration.Underline,
+            maxLines = 1,
+            overflow = overflow,
+            modifier = modifier.clickable {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(text))
+                context.startActivity(intent)
+            }
+        )
+    } else {
+        Text(
+            text = text,
+            fontStyle = FontStyle.Italic,
+            fontSize = fontSize,
+            color = color,
+            maxLines = maxLines,
+            overflow = overflow,
+        )
+    }
+}
+
+@Composable
+fun metaText2(
+    text: String,
+    fontSize: TextUnit = 14.sp,
+    color: Color = MaterialTheme.colorScheme.secondary,
+    modifier: Modifier = Modifier,
+    maxLines: Int = 1,
+    overflow: TextOverflow = TextOverflow.Ellipsis,
+    onClick: (() -> Unit)? = null
+) {
+    val clickableModifier = if (onClick != null) {
+        modifier.clickable { onClick() }
+    } else {
+        modifier
+    }
+
     Text(
         text = text,
         fontStyle = FontStyle.Italic,
         fontSize = fontSize,
-        color = color
+        color = color,
+        modifier = clickableModifier,
+        maxLines = maxLines,
+        overflow = overflow,
     )
 }
 
@@ -131,31 +183,24 @@ fun NoteViewDialog(
                         }
                         Spacer(Modifier.height(6.dp))
 
-                        // Row for sourceTitle, page, and the icon with link to sourceUrl
-                        Row {
-                            note.sourceTitle?.takeIf { it.isNotBlank() }?.let {
-                                metaText("\"$it\"")
-                            }
-                            Spacer(Modifier.width(12.dp))
-                            note.page?.takeIf { it.isNotBlank() }?.let {
-                                metaText(
-                                    "page: $it",
-                                    fontSize = 12.sp,
-                                    modifier = Modifier.alignBy(LastBaseline)
-                                )
-                            }
-                            Spacer(Modifier.width(12.dp))
-                            NoteSourceLink(sourceUrl = note.sourceUrl)
+                        // Suppose sourceTitle is mandatory when there is page or publisher
+                        note.sourceTitle?.takeIf { it.isNotBlank() }?.let { sourceTitle ->
+                            val details = listOfNotNull(
+                                note.page?.takeIf { it.isNotBlank() }?.let { "page $it" },
+                                note.publisher?.takeIf { it.isNotBlank() }
+                            ).takeIf { it.isNotEmpty() }
+                                ?.joinToString(", ", prefix = " (", postfix = ")") ?: ""
+
+                            metaText("\"$sourceTitle\"$details",)
                         }
 
-                        note.publisher?.takeIf { it.isNotBlank() }?.let {
-                            Row{
-                                Spacer(Modifier.width(18.dp))
-                                metaText(
-                                    "( $it )",
-                                    modifier = Modifier.padding(start = 18.dp))
-                            }
+                        Spacer(Modifier.height(12.dp))
+                        note.sourceUrl?.takeIf { it.isNotBlank() }?.let {
+                            metaText("$it")
                         }
+
+                        // Link icon
+//                        NoteSourceLink(sourceUrl = note.sourceUrl)
 
                         Spacer(Modifier.height(24.dp))
                         note.tags?.takeIf { it.isNotEmpty() }?.let { tags ->
