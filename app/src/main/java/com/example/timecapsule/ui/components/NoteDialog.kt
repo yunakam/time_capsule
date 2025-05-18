@@ -29,6 +29,8 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -56,6 +58,11 @@ fun NoteDialog(
     var confirmedTags by remember { mutableStateOf(initialNote.tags ?: emptyList()) }
     var tagInput by remember { mutableStateOf("") }
 
+    // Error state for validation
+    var showTitleMissingError by remember { mutableStateOf(false) }
+    // FocusRequester for the sourceTitle field
+    val titleFocusRequester = remember { FocusRequester() }
+
     // For Edit: reset fields when note changes
     LaunchedEffect(initialNote) {
         text = initialNote.text
@@ -66,6 +73,14 @@ fun NoteDialog(
         publisher = initialNote.publisher ?: ""
         confirmedTags = initialNote.tags ?: emptyList()
         tagInput = ""
+        showTitleMissingError = false
+    }
+
+    // Request focus on the Title field when showError becomes true
+    LaunchedEffect(showTitleMissingError) {
+        if (showTitleMissingError) {
+            titleFocusRequester.requestFocus()
+        }
     }
 
     val authorSuggestions by rememberSuggestions(author) { noteDao.getAuthorSuggestions(it) }
@@ -90,10 +105,16 @@ fun NoteDialog(
 
     val fields = listOf(
         FieldSpec(author, { author = it }, "Author", suggestions = authorSuggestions, onSuggestionClick = { author = it }),
-        FieldSpec(sourceTitle, { sourceTitle = it }, "Title", suggestions = titleSuggestions, onSuggestionClick = { sourceTitle = it }),
-        FieldSpec(sourceUrl, { sourceUrl = it }, "URL", keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)),
+        FieldSpec(
+            sourceTitle,
+            { sourceTitle = it },
+            "Title",
+            modifier = Modifier.focusRequester(titleFocusRequester),
+            suggestions = titleSuggestions,
+            onSuggestionClick = { sourceTitle = it }),
         FieldSpec(page, { page = it.filter { it.isDigit() } }, "Page", keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)),
         FieldSpec(publisher, { publisher = it }, "Publisher", suggestions = publisherSuggestions, onSuggestionClick = { publisher = it }),
+        FieldSpec(sourceUrl, { sourceUrl = it }, "URL", keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)),
         FieldSpec(
             tagInput,
             { tagInput = it },
@@ -147,17 +168,28 @@ fun NoteDialog(
                         maxLines = 10,
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    fields.forEachIndexed { idx, (value, onChange, label, keyboardOptions, keyboardActions, suggestions, onSuggestionClick) ->
+                    fields.forEachIndexed { idx, (value, onChange, label, modifier, keyboardOptions, keyboardActions, suggestions, onSuggestionClick) ->
                         OptionalTextField(
                             value = value,
                             onValueChange = onChange,
                             label = label,
-                            modifier = Modifier,
+                            modifier = modifier,
                             keyboardOptions = keyboardOptions,
                             keyboardActions = keyboardActions,
                             suggestions = suggestions,
                             onSuggestionClick = onSuggestionClick
                         )
+
+                        // Check if the current field is "Title" and show the error message if validation fails
+                        if (label == "Title" && showTitleMissingError) {
+                            Text(
+                                text = "Title is required when Page or Publisher is filled.",
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(start = 24.dp, top = 4.dp)
+                            )
+                        }
+
                         if (idx < fields.size - 1) {
                             Spacer(modifier = Modifier.height(0.dp))
                         }
@@ -193,7 +225,12 @@ fun NoteDialog(
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = {
-                            if (text.isNotBlank()) {
+                            // Validation logic
+                            val isSourceTitleMandatory = page.isNotBlank() || publisher.isNotBlank()
+                            if (isSourceTitleMandatory && sourceTitle.isBlank()) {
+                                showTitleMissingError = true
+                            } else {
+                                showTitleMissingError = false
                                 val newNote = initialNote.copy(
                                     text = text,
                                     author = author.ifBlank { null },

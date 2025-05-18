@@ -66,7 +66,7 @@ fun OptionalTextField(
     val density = LocalDensity.current
 
     var expanded by remember { mutableStateOf(false) }
-    var textFieldWidth by remember { mutableStateOf(0) } // so that the suggestion dropdown fits the width of the text field
+    var textFieldWidth by remember { mutableStateOf(0) } // make the suggestion dropdown fits the width of the text field
 
     // Only apply border when focused
     val borderModifier = if (isFocused) {
