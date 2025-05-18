@@ -1,7 +1,6 @@
 package com.example.timecapsule.ui
 
-import android.content.Intent
-import android.net.Uri
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,9 +10,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -27,15 +26,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.layout.LastBaseline
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.timecapsule.R
 import com.example.timecapsule.data.Note
 import com.example.timecapsule.ui.components.TagChip
 import com.google.accompanist.flowlayout.FlowRow
@@ -51,30 +49,25 @@ fun metaText(
     color: Color = MaterialTheme.colorScheme.secondary,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
-    val isUrl = text.startsWith("http://") || text.startsWith("https://")
+    Text(
+        text = text,
+        fontStyle = FontStyle.Italic,
+        fontSize = fontSize,
+        color = color
+    )
+}
 
-    if (isUrl) {
-        ClickableText(
-            text = AnnotatedString(
-                text,
-                spanStyle = SpanStyle(
-                    textDecoration = TextDecoration.Underline,
-                    fontSize = fontSize,
-                    color = color
-                )
-            ),
-            onClick = {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(text))
-                context.startActivity(intent)
-            }
-        )
-    } else {
-        Text(
-            text = text,
-            fontStyle = FontStyle.Italic,
-            fontSize = fontSize,
-            color = color
+@Composable
+fun NoteSourceLink(sourceUrl: String?, modifier: Modifier = Modifier) {
+    val uriHandler = LocalUriHandler.current
+    sourceUrl?.takeIf { it.isNotBlank() }?.let { url ->
+        Icon(
+            painter = painterResource(id = R.drawable.ic_link),
+            contentDescription = "Open Source Link",
+            tint = MaterialTheme.colorScheme.secondary,
+            modifier = modifier
+                .size(18.dp)
+                .clickable { uriHandler.openUri(url) }
         )
     }
 }
@@ -112,44 +105,63 @@ fun NoteViewDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .verticalScroll(rememberScrollState())
-                        .padding(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                        .padding(bottom = 0.dp),
                 ) {
-                    Text(
-                        note.text,
-                        style = MaterialTheme.typography.bodyLarge,
-                        maxLines = 6,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Spacer(Modifier.height(12.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 180.dp, max = 300.dp)
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        Text(
+                            note.text,
+                            style = MaterialTheme.typography.bodyLarge,
+                        )
+                    }
+
+                    Spacer(Modifier.height(24.dp))
 
                     // Optional fields with left padding
                     Column(
                         modifier = Modifier.padding(start = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                        verticalArrangement = Arrangement.spacedBy(0.dp)
                     ) {
                         note.author?.takeIf { it.isNotBlank() }?.let {
                             metaText("- $it", fontSize = 16.sp)
                         }
-                        Spacer(Modifier.height(12.dp))
-                        note.sourceTitle?.takeIf { it.isNotBlank() }?.let {
-                            metaText("\"$it\"")
+                        Spacer(Modifier.height(6.dp))
+
+                        // Row for sourceTitle, page, and the icon with link to sourceUrl
+                        Row {
+                            note.sourceTitle?.takeIf { it.isNotBlank() }?.let {
+                                metaText("\"$it\"")
+                            }
+                            Spacer(Modifier.width(12.dp))
+                            note.page?.takeIf { it.isNotBlank() }?.let {
+                                metaText(
+                                    "page: $it",
+                                    fontSize = 12.sp,
+                                    modifier = Modifier.alignBy(LastBaseline)
+                                )
+                            }
+                            Spacer(Modifier.width(12.dp))
+                            NoteSourceLink(sourceUrl = note.sourceUrl)
                         }
-                        note.sourceUrl?.takeIf { it.isNotBlank() }?.let {
-                            metaText("$it")
-                        }
-                        note.page?.takeIf { it.isNotBlank() }?.let {
-                            metaText("Page: $it")
-                        }
+
                         note.publisher?.takeIf { it.isNotBlank() }?.let {
-                            metaText("Publisher: $it")
+                            Row{
+                                Spacer(Modifier.width(18.dp))
+                                metaText(
+                                    "( $it )",
+                                    modifier = Modifier.padding(start = 18.dp))
+                            }
                         }
-                        Spacer(Modifier.height(8.dp))
+
+                        Spacer(Modifier.height(24.dp))
                         note.tags?.takeIf { it.isNotEmpty() }?.let { tags ->
                             FlowRow(
                                 mainAxisSpacing = 8.dp,
                                 crossAxisSpacing = 8.dp,
-                                modifier = Modifier.padding(top = 4.dp, bottom = 4.dp)
                             ) {
                                 tags.forEach { tag ->
                                     TagChip(tag = tag, icon = true, removable = false)
@@ -157,21 +169,30 @@ fun NoteViewDialog(
                             }
                         }
 
-                        Spacer(Modifier.height(24.dp))
-                        Column(modifier = Modifier.padding(start = 48.dp),) {
-                            dataText("Created: ${formatDate(note.createdAt)}")
-                            note.lastVisitedAt?.let {
-                                dataText("Last Visited: ${formatDate(it)}")
+                        Spacer(Modifier.height(20.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            Column(modifier = Modifier.padding(end = 12.dp, bottom = 0.dp)) {
+                                dataText("Created: ${formatDate(note.createdAt)}")
+                                note.lastVisitedAt?.let {
+                                    dataText("Last Visited: ${formatDate(it)}")
+                                }
+                                dataText("Visited: ${note.visitCount}")
                             }
-                            dataText("Visited: ${note.visitCount}")
                         }
+
                     }
                 }
             }
         },
         confirmButton = {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(0.dp),
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -190,6 +211,3 @@ fun NoteViewDialog(
 
 fun formatDate(date: Date?): String =
     date?.let { SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(it) } ?: "-"
-
-fun formatTags(tags: List<String>?): String =
-    tags?.joinToString(", ")?.takeIf { it.isNotBlank() } ?: "-"

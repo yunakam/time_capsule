@@ -43,7 +43,7 @@ fun TagChip(
             Image(
                 painter = painterResource(id = R.drawable.ic_tag),
                 contentDescription = "Tag icon",
-                modifier = modifier.size(16.dp)
+                modifier = modifier.size(12.dp)
             )
             Spacer(Modifier.width(4.dp))
         }
