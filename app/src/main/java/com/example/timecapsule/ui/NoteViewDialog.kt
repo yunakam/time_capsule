@@ -24,7 +24,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -56,8 +61,10 @@ fun metaText(
 ) {
     val context = LocalContext.current
     val isUrl = text.startsWith("http://") || text.startsWith("https://")
+    var showDialog by remember { mutableStateOf(false) }
 
     if (isUrl) {
+        // Show the clickable Text
         Text(
             text = text,
             fontSize = fontSize,
@@ -66,10 +73,32 @@ fun metaText(
             maxLines = 1,
             overflow = overflow,
             modifier = modifier.clickable {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(text))
-                context.startActivity(intent)
+                showDialog = true
             }
         )
+
+        // Show the confirmation dialog if needed
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                title = { Text("Open Link") },
+                text = { Text("Do you want to open this link?\n\n$text") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showDialog = false
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(text))
+                            context.startActivity(intent)
+                        }
+                    ) { Text("Open") }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showDialog = false }
+                    ) { Text("Cancel") }
+                }
+            )
+        }
     } else {
         Text(
             text = text,
@@ -82,33 +111,7 @@ fun metaText(
     }
 }
 
-@Composable
-fun metaText2(
-    text: String,
-    fontSize: TextUnit = 14.sp,
-    color: Color = MaterialTheme.colorScheme.secondary,
-    modifier: Modifier = Modifier,
-    maxLines: Int = 1,
-    overflow: TextOverflow = TextOverflow.Ellipsis,
-    onClick: (() -> Unit)? = null
-) {
-    val clickableModifier = if (onClick != null) {
-        modifier.clickable { onClick() }
-    } else {
-        modifier
-    }
-
-    Text(
-        text = text,
-        fontStyle = FontStyle.Italic,
-        fontSize = fontSize,
-        color = color,
-        modifier = clickableModifier,
-        maxLines = maxLines,
-        overflow = overflow,
-    )
-}
-
+// for link icon
 @Composable
 fun NoteSourceLink(sourceUrl: String?, modifier: Modifier = Modifier) {
     val uriHandler = LocalUriHandler.current
