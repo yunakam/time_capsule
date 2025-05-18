@@ -167,7 +167,7 @@ fun NoteDialog(
                         singleLine = false,
                         maxLines = 10,
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(18.dp))
                     fields.forEachIndexed { idx, (value, onChange, label, modifier, keyboardOptions, keyboardActions, suggestions, onSuggestionClick) ->
                         OptionalTextField(
                             value = value,
@@ -183,10 +183,10 @@ fun NoteDialog(
                         // Check if the current field is "Title" and show the error message if validation fails
                         if (label == "Title" && showTitleMissingError) {
                             Text(
-                                text = "Title is required when Page or Publisher is filled.",
+                                text = "Required when Page or Publisher is filled.",
                                 color = MaterialTheme.colorScheme.error,
                                 style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier.padding(start = 24.dp, top = 4.dp)
+                                modifier = Modifier.padding(start = 32.dp, top = 4.dp)
                             )
                         }
 
@@ -202,7 +202,7 @@ fun NoteDialog(
                         crossAxisSpacing = 8.dp,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(start = 8.dp)
+                            .padding(start = 72.dp)
                     ) {
                         confirmedTags.forEach { tag ->
                             TagChip(

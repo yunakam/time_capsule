@@ -37,7 +37,7 @@ fun TagChip(
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
                 shape = RoundedCornerShape(24.dp)
             )
-            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .padding(horizontal = 10.dp, vertical = 6.dp)
     ) {
         if (icon) {
             Image(
@@ -56,12 +56,12 @@ fun TagChip(
             color = MaterialTheme.colorScheme.onSurface
         )
         if (removable && onRemove != null) {
-            Spacer(Modifier.width(4.dp))
+            Spacer(Modifier.width(2.dp))
             Icon(
                 imageVector = Icons.Default.Close,
                 contentDescription = "Remove tag",
                 modifier = Modifier
-                    .size(16.dp)
+                    .size(12.dp)
                     .clickable { onRemove() }
             )
         }
