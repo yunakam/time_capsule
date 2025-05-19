@@ -154,7 +154,7 @@ fun NoteViewDialog(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 200.dp, max = 550.dp)
+                    .heightIn(max = 550.dp)
             ) {
                 Column(
                     modifier = Modifier
@@ -165,7 +165,7 @@ fun NoteViewDialog(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(min = 180.dp, max = 300.dp)
+                            .heightIn(max = 300.dp)
                             .verticalScroll(rememberScrollState())
                     ) {
                         Text(
