@@ -200,7 +200,7 @@ fun NoteViewDialog(
                                note.page?.takeIf { it.isNotBlank() }?.let { "page $it" },
                                note.publisher?.takeIf { it.isNotBlank() }
                            ).takeIf { it.isNotEmpty() }
-                               ?.joinToString(", ", prefix = " (((", postfix = ")") ?: ""
+                               ?.joinToString(", ", prefix = " (", postfix = ")") ?: ""
 
                            Row(verticalAlignment = Alignment.CenterVertically) {
                                metaText(
@@ -217,7 +217,7 @@ fun NoteViewDialog(
 
                        Spacer(Modifier.height(12.dp))
                        note.sourceUrl?.takeIf { it.isNotBlank() }?.let {
-                           metaText("$it")
+                           metaText(it)
                        }
 
                        // Link icon

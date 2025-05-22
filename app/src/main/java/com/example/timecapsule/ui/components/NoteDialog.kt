@@ -92,11 +92,13 @@ fun NoteDialog(
         value = noteDao.getAllTagsRaw()
     }
     val allTags = allTagsRaw
+        .asSequence() // Convert to Sequence for lazy evaluation to ensure that intermediate results are not stored in memory
         .filterNotNull()
         .flatMap { it.split(",") }
         .map { it.trim() }
         .filter { it.isNotEmpty() }
         .distinct()
+        .toList() // Convert back to a List at the end
 
     // Suggestions for tag input
     val tagSuggestions = if (tagInput.isNotBlank()) {
@@ -117,7 +119,6 @@ fun NoteDialog(
         FieldSpec(sourceUrl, { sourceUrl = it }, "URL", keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)),
         FieldSpec(
             tagInput,
-//            { tagInput = it },
             { input ->
                 // Handle ',' character to add tag
                 if (input.endsWith(",")) {
@@ -125,7 +126,7 @@ fun NoteDialog(
                     if (trimmed.isNotEmpty() && !confirmedTags.contains(trimmed)) {
                         confirmedTags = confirmedTags + trimmed
                     }
-                    tagInput = "" // Clear the input field
+                    tagInput = ""
                 } else {
                     tagInput = input
                 }

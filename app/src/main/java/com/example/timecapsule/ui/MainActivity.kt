@@ -20,7 +20,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -54,14 +53,6 @@ class MainActivity : ComponentActivity() {
                 var currentFilterType by remember { mutableStateOf<FilterType?>(null) }
                 var currentFilterValue by remember { mutableStateOf<String?>(null) }
 
-                val dummy_notes = remember {
-                    mutableStateListOf(
-                        Note(1, text = "Note from Alice", author = "Alice", sourceTitle = "Article A", tags = listOf("kotlin", "android")),
-                        Note(2, text = "Note from Bob", author = "Bob", sourceTitle = "Article B", tags = listOf("compose", "android")),
-                        Note(3, text = "Another note from Alice", author = "Alice", sourceTitle = "Article C", tags = listOf("kotlin", "ui")),
-                    )
-                }
-
                 var showAddDialog by remember { mutableStateOf(true) }
                 var showViewDialogId by remember { mutableStateOf<Long?>(null) }
                 var showEditDialogId by remember { mutableStateOf<Long?>(null) }
@@ -90,8 +81,8 @@ class MainActivity : ComponentActivity() {
                 val visitedCount = visitedNotes.size
                 val bucketSize = (visitedCount / colorBuckets.size.toFloat()).coerceAtLeast(1f)
 
-                // This function needs access to 'notes' from the current scope
-                // To ensure it always uses the latest 'notes', define it inside Composable or pass 'notes'
+                // Give access to 'notes' from the current scope
+                // to ensure it always uses the latest 'notes', define it inside Composable or pass 'notes'
                 val colorForNote: (Note) -> Color = { note ->
                     val currentVisitedNotes = notes.filter { it.lastVisitedAt != null }
                         .sortedByDescending { it.lastVisitedAt }
@@ -99,7 +90,7 @@ class MainActivity : ComponentActivity() {
                     val currentBucketSize = (currentVisitedCount / colorBuckets.size.toFloat()).coerceAtLeast(1f)
 
                     if (note.lastVisitedAt == null) {
-                        colorBuckets[0]  // new card
+                        colorBuckets[0]
                     } else {
                         val recencyIndex = currentVisitedNotes.indexOfFirst { it.id == note.id }
                         if (recencyIndex == -1) colorBuckets.last() else {
@@ -121,12 +112,11 @@ class MainActivity : ComponentActivity() {
 //                }
 
 
-
                 if (showFilteredNotesScreen && currentFilterType != null && currentFilterValue != null) {
                     FilteredNotesScreen(
                         filterType = currentFilterType!!,
                         filterValue = currentFilterValue!!,
-                        allNotes = notes, // Pass all notes from the database
+                        allNotes = notes,
                         onDismiss = {
                             showFilteredNotesScreen = false
                             currentFilterType = null
@@ -146,6 +136,7 @@ class MainActivity : ComponentActivity() {
                         colorForNote = colorForNote
                     )
                 } else {
+
                     // Main screen content
                     Scaffold(
                         floatingActionButton = {
@@ -220,28 +211,28 @@ class MainActivity : ComponentActivity() {
                     NoteViewDialog(
                         note = note,
                         onEdit = {
-                            showViewDialogId = null // Dismiss view dialog
+                            showViewDialogId = null
                             showEditDialogId = note.id
                         },
                         onDelete = { _ ->
-                            showViewDialogId = null // Dismiss view dialog if delete is chosen from here
+                            showViewDialogId = null
                             showDeleteDialogId = note.id
                         },
                         onDismiss = { showViewDialogId = null },
                         onFilterByAuthor = { author ->
-                            showViewDialogId = null // Dismiss view dialog
+                            showViewDialogId = null
                             currentFilterType = FilterType.AUTHOR
                             currentFilterValue = author
                             showFilteredNotesScreen = true
                         },
                         onFilterByTitle = { title ->
-                            showViewDialogId = null // Dismiss view dialog
+                            showViewDialogId = null
                             currentFilterType = FilterType.SOURCE_TITLE
                             currentFilterValue = title
                             showFilteredNotesScreen = true
                         },
                         onFilterByTag = { tag ->
-                            showViewDialogId = null // Dismiss view dialog
+                            showViewDialogId = null
                             currentFilterType = FilterType.TAG
                             currentFilterValue = tag
                             showFilteredNotesScreen = true
@@ -265,8 +256,7 @@ class MainActivity : ComponentActivity() {
                         onDismiss = { showEditDialogId = null },
                         onCancel = {
                             showEditDialogId = null
-                            // Optionally, re-open view dialog if edit was cancelled
-                            // showViewDialogId = note.id
+                            showViewDialogId = note.id
                         },
                         noteDao = noteDao
                     )
@@ -282,8 +272,8 @@ class MainActivity : ComponentActivity() {
                                     db.noteDao().delete(note)
                                 }
                                 showDeleteDialogId = null
-                                showEditDialogId = null // Close edit dialog if delete was from there
-                                showViewDialogId = null // Close view dialog if delete was from there
+                                showEditDialogId = null
+                                showViewDialogId = null
                             }
                         },
                         onDismiss = { showDeleteDialogId = null },
