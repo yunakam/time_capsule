@@ -117,7 +117,19 @@ fun NoteDialog(
         FieldSpec(sourceUrl, { sourceUrl = it }, "URL", keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)),
         FieldSpec(
             tagInput,
-            { tagInput = it },
+//            { tagInput = it },
+            { input ->
+                // Handle ',' character to add tag
+                if (input.endsWith(",")) {
+                    val trimmed = input.trimEnd(',')
+                    if (trimmed.isNotEmpty() && !confirmedTags.contains(trimmed)) {
+                        confirmedTags = confirmedTags + trimmed
+                    }
+                    tagInput = "" // Clear the input field
+                } else {
+                    tagInput = input
+                }
+            },
             "Tag",
             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(
