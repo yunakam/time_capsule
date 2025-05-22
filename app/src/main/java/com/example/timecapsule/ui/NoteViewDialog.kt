@@ -23,6 +23,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -42,6 +43,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.example.timecapsule.R
 import com.example.timecapsule.data.Note
 import com.example.timecapsule.ui.components.TagChip
@@ -146,115 +148,145 @@ fun NoteViewDialog(
     note: Note,
     onEdit: () -> Unit,
     onDelete: (Note) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onFilterByAuthor: (String) -> Unit = {},
+    onFilterByTitle: (String) -> Unit = {},
+    onFilterByTag: (String) -> Unit = {},
 ) {
-    AlertDialog(
+    Dialog(
         onDismissRequest = onDismiss,
-        text = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 550.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
-                        .padding(bottom = 0.dp),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 300.dp)
-                            .verticalScroll(rememberScrollState())
-                    ) {
-                        Text(
-                            note.text,
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                    }
+    ) {
+       Surface(
+           shape = MaterialTheme.shapes.medium,
+           tonalElevation = 8.dp,
+           color = MaterialTheme.colorScheme.surface,
+           modifier = Modifier.padding(16.dp)
+       ) {
+           Box(
+               modifier = Modifier
+                   .fillMaxWidth()
+                   .heightIn(max = 550.dp)
+                   .padding(24.dp)
+           ) {
+               Column(
+                   modifier = Modifier
+                       .fillMaxWidth()
+                       .verticalScroll(rememberScrollState())
+                       .padding(bottom = 0.dp),
+               ) {
+                   Box(
+                       modifier = Modifier
+                           .fillMaxWidth()
+                           .heightIn(max = 300.dp)
+                           .verticalScroll(rememberScrollState())
+                   ) {
+                       Text(
+                           note.text,
+                           style = MaterialTheme.typography.bodyLarge,
+                       )
+                   }
 
-                    Spacer(Modifier.height(24.dp))
+                   Spacer(Modifier.height(24.dp))
 
-                    // Optional fields with left padding
-                    Column(
-                        modifier = Modifier.padding(start = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(0.dp)
-                    ) {
-                        note.author?.takeIf { it.isNotBlank() }?.let {
-                            metaText("- $it", fontSize = 16.sp)
-                        }
-                        Spacer(Modifier.height(6.dp))
+                   // Optional fields with left padding
+                   Column(
+                       modifier = Modifier.padding(start = 16.dp),
+                       verticalArrangement = Arrangement.spacedBy(0.dp)
+                   ) {
+                       note.author?.takeIf { it.isNotBlank() }?.let {
+                           metaText(
+                               "- $it",
+                               fontSize = 16.sp,
+                               modifier = Modifier
+                                   .clickable { onFilterByAuthor(it) }
+                           )
+                       }
 
-                        // Suppose sourceTitle is mandatory when there is page or publisher
-                        note.sourceTitle?.takeIf { it.isNotBlank() }?.let { sourceTitle ->
-                            val details = listOfNotNull(
-                                note.page?.takeIf { it.isNotBlank() }?.let { "page $it" },
-                                note.publisher?.takeIf { it.isNotBlank() }
-                            ).takeIf { it.isNotEmpty() }
-                                ?.joinToString(", ", prefix = " (", postfix = ")") ?: ""
+                       Spacer(Modifier.height(6.dp))
 
-                            metaText("\"$sourceTitle\"$details",)
-                        }
+                       note.sourceTitle?.takeIf { it.isNotBlank() }?.let { sourceTitle ->
+                           val details = listOfNotNull(
+                               note.page?.takeIf { it.isNotBlank() }?.let { "page $it" },
+                               note.publisher?.takeIf { it.isNotBlank() }
+                           ).takeIf { it.isNotEmpty() }
+                               ?.joinToString(", ", prefix = " (", postfix = ")") ?: ""
 
-                        Spacer(Modifier.height(12.dp))
-                        note.sourceUrl?.takeIf { it.isNotBlank() }?.let {
-                            metaText("$it")
-                        }
+                           Row(verticalAlignment = Alignment.CenterVertically) {
+                               metaText(
+                                   text = "\"$sourceTitle\"",
+                                   modifier = Modifier.clickable { onFilterByTitle(sourceTitle) }
+                               )
+                               if (details.isNotBlank()) {
+                                   metaText(
+                                       text = details,
+                                   )
+                               }
+                           }
+                       }
 
-                        // Link icon
-//                        NoteSourceLink(sourceUrl = note.sourceUrl)
+                       Spacer(Modifier.height(12.dp))
+                       note.sourceUrl?.takeIf { it.isNotBlank() }?.let {
+                           metaText("$it")
+                       }
 
-                        Spacer(Modifier.height(24.dp))
-                        note.tags?.takeIf { it.isNotEmpty() }?.let { tags ->
-                            FlowRow(
-                                mainAxisSpacing = 8.dp,
-                                crossAxisSpacing = 8.dp,
-                            ) {
-                                tags.forEach { tag ->
-                                    TagChip(tag = tag, icon = true, removable = false)
-                                }
-                            }
-                        }
+                       // Link icon
+                       // NoteSourceLink(sourceUrl = note.sourceUrl)
 
-                        Spacer(Modifier.height(20.dp))
+                       Spacer(Modifier.height(24.dp))
+                       note.tags?.takeIf { it.isNotEmpty() }?.let { tags ->
+                           FlowRow(
+                               mainAxisSpacing = 8.dp,
+                               crossAxisSpacing = 8.dp,
+                           ) {
+                               tags.forEach { tag ->
+                                   Box(
+                                       modifier = Modifier.clickable { onFilterByTag(tag) }
+                                   ) {
+                                       TagChip(tag = tag, icon = true, removable = false)
+                                   }                               }
+                           }
+                       }
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End
-                        ) {
-                            Column(modifier = Modifier.padding(end = 12.dp, bottom = 0.dp)) {
-                                dataText("Created: ${formatDate(note.createdAt)}")
-                                note.lastVisitedAt?.let {
-                                    dataText("Last Visited: ${formatDate(it)}")
-                                }
-                                dataText("Visited: ${note.visitCount}")
-                            }
-                        }
+                       Spacer(Modifier.height(8.dp))
 
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(0.dp),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = { onDelete(note) }) {
-                    Icon(Icons.Default.Delete, contentDescription = "Delete Note")
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                IconButton(onClick = onEdit) {
-                    Icon(Icons.Default.Edit, contentDescription = "Edit Note")
-                }
-            }
-        },
-        dismissButton = {}
-    )
+                       Row(
+                           modifier = Modifier.fillMaxWidth(),
+                           horizontalArrangement = Arrangement.End
+                       ) {
+                           Column(modifier = Modifier.padding(end = 12.dp, bottom = 0.dp)) {
+                               dataText("Created: ${formatDate(note.createdAt)}")
+                               note.lastVisitedAt?.let {
+                                   dataText("Last Visited: ${formatDate(it)}")
+                               }
+                               dataText("Visited: ${note.visitCount}")
+                           }
+                       }
+
+                   }
+
+                   // Delete and Edit icons
+                   Spacer(Modifier.height(8.dp))
+                   Row(
+                       modifier = Modifier
+                           .fillMaxWidth()
+                           .padding(0.dp),
+                       horizontalArrangement = Arrangement.End,
+                       verticalAlignment = Alignment.CenterVertically
+                   ) {
+                       IconButton(onClick = { onDelete(note) }) {
+                           Icon(Icons.Default.Delete, contentDescription = "Delete Note")
+                       }
+                       Spacer(modifier = Modifier.width(8.dp))
+                       IconButton(onClick = onEdit) {
+                           Icon(Icons.Default.Edit, contentDescription = "Edit Note")
+                       }
+                   }
+               }
+           }
+
+
+       }
+    }
 }
 
 fun formatDate(date: Date?): String =
