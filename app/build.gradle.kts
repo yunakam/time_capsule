@@ -79,5 +79,5 @@ dependencies {
     implementation(libs.compose.foundation.layout)
     implementation(libs.compose.runtime.livedata)
     implementation(libs.accompanist.flowlayout)
-
+    implementation(libs.navigation.compose)
 }

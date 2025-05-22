@@ -52,6 +52,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+
 @Composable
 fun metaText(
     text: String,
@@ -60,6 +61,7 @@ fun metaText(
     modifier: Modifier = Modifier,
     maxLines: Int = 2,
     overflow: TextOverflow = TextOverflow.Ellipsis,
+    onClick: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     val isUrl = text.startsWith("http://") || text.startsWith("https://")
@@ -102,6 +104,11 @@ fun metaText(
             )
         }
     } else {
+        val effectiveModifier = if (onClick != null) {
+            modifier.clickable(onClick = onClick)
+        } else {
+            modifier
+        }
         Text(
             text = text,
             fontStyle = FontStyle.Italic,
@@ -109,22 +116,7 @@ fun metaText(
             color = color,
             maxLines = maxLines,
             overflow = overflow,
-        )
-    }
-}
-
-// for link icon
-@Composable
-fun NoteSourceLink(sourceUrl: String?, modifier: Modifier = Modifier) {
-    val uriHandler = LocalUriHandler.current
-    sourceUrl?.takeIf { it.isNotBlank() }?.let { url ->
-        Icon(
-            painter = painterResource(id = R.drawable.ic_link),
-            contentDescription = "Open Source Link",
-            tint = MaterialTheme.colorScheme.secondary,
-            modifier = modifier
-                .size(18.dp)
-                .clickable { uriHandler.openUri(url) }
+            modifier = effectiveModifier // Apply the constructed modifier
         )
     }
 }
@@ -197,8 +189,7 @@ fun NoteViewDialog(
                            metaText(
                                "- $it",
                                fontSize = 16.sp,
-                               modifier = Modifier
-                                   .clickable { onFilterByAuthor(it) }
+                               onClick =  { onFilterByAuthor(it) },
                            )
                        }
 
@@ -209,7 +200,7 @@ fun NoteViewDialog(
                                note.page?.takeIf { it.isNotBlank() }?.let { "page $it" },
                                note.publisher?.takeIf { it.isNotBlank() }
                            ).takeIf { it.isNotEmpty() }
-                               ?.joinToString(", ", prefix = " (", postfix = ")") ?: ""
+                               ?.joinToString(", ", prefix = " (((", postfix = ")") ?: ""
 
                            Row(verticalAlignment = Alignment.CenterVertically) {
                                metaText(
@@ -291,3 +282,21 @@ fun NoteViewDialog(
 
 fun formatDate(date: Date?): String =
     date?.let { SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(it) } ?: "-"
+
+
+
+// for link icon
+@Composable
+fun NoteSourceLink(sourceUrl: String?, modifier: Modifier = Modifier) {
+    val uriHandler = LocalUriHandler.current
+    sourceUrl?.takeIf { it.isNotBlank() }?.let { url ->
+        Icon(
+            painter = painterResource(id = R.drawable.ic_link),
+            contentDescription = "Open Source Link",
+            tint = MaterialTheme.colorScheme.secondary,
+            modifier = modifier
+                .size(18.dp)
+                .clickable { uriHandler.openUri(url) }
+        )
+    }
+}
