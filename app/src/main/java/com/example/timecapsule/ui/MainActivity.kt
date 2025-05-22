@@ -32,6 +32,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -42,100 +43,19 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.compose.rememberNavController
 import com.example.compose.AppTheme
 import com.example.timecapsule.data.AppDatabase
 import com.example.timecapsule.data.Note
 import com.example.timecapsule.data.NoteRepository
+import com.example.timecapsule.ui.components.DeleteNoteDialog
+import com.example.timecapsule.ui.components.NoteCard
 import com.example.timecapsule.ui.components.NoteDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Locale
-
-@Composable
-fun NoteCard(
-    note: Note,
-    onClick: () -> Unit,
-    onDeleteClick: () -> Unit,
-    backgroundColor: Color
-) {
-    val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
-    val cleanedText = note.text
-        .split("\n")
-        .dropLastWhile { it.trim().isEmpty() }
-        .joinToString("\n")
-    val lines = cleanedText.lines()
-    val previewText = if (lines.size > 5) lines.take(5).joinToString("\n") + "\n..." else cleanedText
-
-    Card(
-        modifier = Modifier
-            .widthIn(min = 115.dp, max = 240.dp)
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = { onClick() },
-                    onLongPress = { onDeleteClick() }
-                )
-            }
-            .padding(4.dp),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = backgroundColor
-        )
-    ) {
-        Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-            Column {
-                Spacer(Modifier.height(10.dp))
-                Text(
-                    text = previewText,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 6,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = dateFormat.format(note.createdAt),
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                    color = MaterialTheme.colorScheme.secondary
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun DeleteNoteDialog(
-    onDelete: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Delete Note") },
-        text = { Text(
-            "Are you sure you want to delete this note?",
-//            color = textColor
-        ) },
-        confirmButton = {
-            TextButton(onClick = onDelete) {
-                Text(
-                    "Delete",
-//                    color = buttonTextColor
-                )
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(
-                    "Cancel",
-//                    color = buttonTextColor
-                )
-            }
-        },
-//        containerColor = containerColor
-    )
-}
-
 
 class MainActivity : ComponentActivity() {
 
@@ -146,6 +66,21 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             AppTheme(dynamicColor = false) {
+
+                var showFilteredDialog by remember { mutableStateOf(false) }
+                var filteredCategory by remember { mutableStateOf<FilterCategory?>(null) }
+                var filteredValue by remember { mutableStateOf("") }
+
+                val navController = rememberNavController()
+
+                val dummy_notes = remember {
+                    mutableStateListOf(
+                        Note(1, text = "Note from Alice", author = "Alice", sourceTitle = "Article A", tags = listOf("kotlin", "android")),
+                        Note(2, text = "Note from Bob", author = "Bob", sourceTitle = "Article B", tags = listOf("compose", "android")),
+                        Note(3, text = "Another note from Alice", author = "Alice", sourceTitle = "Article C", tags = listOf("kotlin", "ui")),
+                    )
+                }
+
                 var showAddDialog by remember { mutableStateOf(true) }
                 var showViewDialogId by remember { mutableStateOf<Long?>(null) }
                 var showEditDialogId by remember { mutableStateOf<Long?>(null) }
