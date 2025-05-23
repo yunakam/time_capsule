@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,7 +28,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -40,7 +41,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import com.example.compose.AppTheme
 import com.example.timecapsule.data.AppDatabase
@@ -204,29 +204,40 @@ class MainActivity : ComponentActivity() {
                             },
                             bottomBar = {
                                 if (isSearchActive) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(start = 16.dp, end = 16.dp, bottom = 48.dp)
+                                    Surface(
+                                        color = Color.Transparent,
+                                        shadowElevation = 0.dp,
+                                        tonalElevation = 0.dp
                                     ) {
-                                        OutlinedTextField(
-                                            value = searchQuery,
-                                            onValueChange = { searchQuery = it },
-                                            placeholder = { Text("Search notes...") },
+                                        Row(
                                             modifier = Modifier
-                                                .weight(1f)
-                                                .padding(end = 8.dp),
-                                            shape = RoundedCornerShape(12.dp),
-                                            singleLine = true,
-                                            trailingIcon = {
-                                                IconButton(onClick = {
-                                                    searchQuery = ""
-                                                    isSearchActive = false
-                                                }) {
-                                                    Icon(Icons.Default.Close, contentDescription = "Close search")
-                                                }
-                                            }
-                                        )
+                                                .fillMaxWidth()
+                                                .padding(start = 16.dp, end = 16.dp, bottom = 48.dp)
+                                        ) {
+                                            OutlinedTextField(
+                                                value = searchQuery,
+                                                onValueChange = { searchQuery = it },
+                                                placeholder = { Text("Search notes...") },
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .padding(end = 8.dp),
+                                                shape = RoundedCornerShape(12.dp),
+                                                singleLine = true,
+                                                trailingIcon = {
+                                                    IconButton(onClick = {
+                                                        searchQuery = ""
+                                                        isSearchActive = false
+                                                    }) {
+                                                        Icon(Icons.Default.Close, contentDescription = "Close search")
+                                                    }
+                                                },
+                                                colors = TextFieldDefaults.colors(
+                                                    focusedContainerColor = Color.Transparent,
+                                                    unfocusedContainerColor = Color.Transparent,
+                                                    disabledContainerColor = Color.Transparent
+                                                ),
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -235,13 +246,6 @@ class MainActivity : ComponentActivity() {
                                 Modifier
                                     .padding(padding)
                                     .fillMaxSize()
-                                    .then(
-                                        if (isSearchActive) Modifier.pointerInput(Unit) {
-                                            detectTapGestures {
-                                                isSearchActive = false
-                                            }
-                                        } else Modifier
-                                    )
                             ) {
                                 val filteredNotes = if (searchQuery.isBlank()) {
                                     sortedNotes
