@@ -6,10 +6,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -18,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -31,6 +34,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -43,6 +47,8 @@ import com.example.timecapsule.data.NoteRepository
 import com.example.timecapsule.ui.components.DeleteNoteDialog
 import com.example.timecapsule.ui.components.NoteCard
 import com.example.timecapsule.ui.components.NoteDialog
+import com.example.timecapsule.ui.components.NoteViewDialog
+import com.example.timecapsule.ui.components.SettingsDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -68,6 +74,8 @@ class MainActivity : ComponentActivity() {
 
                 var isSearchActive by remember { mutableStateOf(false) }
                 var searchQuery by remember { mutableStateOf("") }
+
+                var showSettingsDialog by remember { mutableStateOf(false) }
 
                 val scope = rememberCoroutineScope()
                 val notesFlow = remember { db.noteDao().getAllFlow() }
@@ -152,19 +160,32 @@ class MainActivity : ComponentActivity() {
                     Scaffold(
                         floatingActionButton = {
                             if (!isSearchActive) {
-                                Row(
+                                // Stack settings button above the add/search buttons
+                                Column(
+                                    horizontalAlignment = Alignment.End,
                                     modifier = Modifier.padding(end = 16.dp, bottom = 36.dp)
                                 ) {
                                     FloatingActionButton(
-                                        onClick = { isSearchActive = true },
-                                        modifier = Modifier.padding(end = 16.dp)
+                                        onClick = { showSettingsDialog = true },
+                                        modifier = Modifier.padding(end = 4.dp, bottom = 16.dp)
+                                            .size(48.dp)
                                     ) {
-                                        Icon(Icons.Default.Search, contentDescription = "Search")
+                                        Icon(Icons.Default.Settings, contentDescription = "Settings")
                                     }
-                                    FloatingActionButton(
-                                        onClick = { showAddDialog = true }
-                                    ) {
-                                        Icon(Icons.Default.Add, contentDescription = "Add")
+                                    Row {
+                                        FloatingActionButton(
+                                            onClick = { isSearchActive = true },
+                                            modifier = Modifier
+                                                .padding(end = 16.dp, top = 4.dp)
+                                                .size(48.dp)
+                                        ) {
+                                            Icon(Icons.Default.Search, contentDescription = "Search")
+                                        }
+                                        FloatingActionButton(
+                                            onClick = { showAddDialog = true },
+                                        ) {
+                                            Icon(Icons.Default.Add, contentDescription = "Add")
+                                        }
                                     }
                                 }
                             }
@@ -344,6 +365,13 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         onDismiss = { showDeleteDialogId = null },
+                    )
+                }
+
+                // Settings Dialog
+                if (showSettingsDialog) {
+                    SettingsDialog(
+                        onDismiss = { showSettingsDialog = false }
                     )
                 }
             }

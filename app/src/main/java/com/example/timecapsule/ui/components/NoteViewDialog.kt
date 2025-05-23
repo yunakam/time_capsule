@@ -1,4 +1,4 @@
-package com.example.timecapsule.ui
+package com.example.timecapsule.ui.components
 
 import android.content.Intent
 import android.net.Uri
@@ -46,7 +46,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.timecapsule.R
 import com.example.timecapsule.data.Note
-import com.example.timecapsule.ui.components.TagChip
 import com.google.accompanist.flowlayout.FlowRow
 import java.text.SimpleDateFormat
 import java.util.Date
