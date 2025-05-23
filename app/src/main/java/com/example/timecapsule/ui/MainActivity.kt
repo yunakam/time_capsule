@@ -5,19 +5,25 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,6 +63,9 @@ class MainActivity : ComponentActivity() {
                 var showViewDialogId by remember { mutableStateOf<Long?>(null) }
                 var showEditDialogId by remember { mutableStateOf<Long?>(null) }
                 var showDeleteDialogId by remember { mutableStateOf<Long?>(null) }
+
+                var isSearchActive by remember { mutableStateOf(false) }
+                var searchQuery by remember { mutableStateOf("") }
 
                 val scope = rememberCoroutineScope()
                 val notesFlow = remember { db.noteDao().getAllFlow() }
@@ -140,12 +149,51 @@ class MainActivity : ComponentActivity() {
                     // Main screen content
                     Scaffold(
                         floatingActionButton = {
-                            FloatingActionButton(
-                                onClick = { showAddDialog = true },
-                                modifier = Modifier
-                                    .offset(y = (-32).dp, x = (-32).dp)
-                            ) {
-                                Icon(Icons.Default.Add, contentDescription = "Add")
+                            if (!isSearchActive) {
+                                Row(
+                                    modifier = Modifier.padding(end = 16.dp, bottom = 36.dp)
+                                ) {
+                                    FloatingActionButton(
+                                        onClick = { isSearchActive = true },
+                                        modifier = Modifier.padding(end = 16.dp)
+                                    ) {
+                                        Icon(Icons.Default.Search, contentDescription = "Search")
+                                    }
+                                    FloatingActionButton(
+                                        onClick = { showAddDialog = true }
+                                    ) {
+                                        Icon(Icons.Default.Add, contentDescription = "Add")
+                                    }
+                                }
+                            }
+                        },
+                        bottomBar = {
+                            if (isSearchActive) {
+                                // The search bar at the bottom
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(start = 16.dp, end = 16.dp, bottom = 48.dp)
+                                ) {
+                                    OutlinedTextField(
+                                        value = searchQuery,
+                                        onValueChange = { searchQuery = it },
+                                        placeholder = { Text("Search notes...") },
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .padding(end = 8.dp),
+                                        shape = RoundedCornerShape(12.dp),
+                                        singleLine = true,
+                                        trailingIcon = {
+                                            IconButton(onClick = {
+                                                searchQuery = ""
+                                                isSearchActive = false
+                                            }) {
+                                                Icon(Icons.Default.Close, contentDescription = "Close search")
+                                            }
+                                        }
+                                    )
+                                }
                             }
                         }
                     ) { padding ->
@@ -154,7 +202,16 @@ class MainActivity : ComponentActivity() {
                                 .padding(padding)
                                 .fillMaxSize()
                         ) {
-                            val sortedNotes = notes.sortedByDescending { it.createdAt }
+                            val filteredNotes = if (searchQuery.isBlank()) {
+                                sortedNotes
+                            } else {
+                                sortedNotes.filter { note ->
+                                    (note.text?.contains(searchQuery, ignoreCase = true) == true) ||
+                                    (note.sourceTitle?.contains(searchQuery, ignoreCase = true) == true) ||
+                                    (note.author?.contains(searchQuery, ignoreCase = true) == true) ||
+                                    (note.tags?.any { it.contains(searchQuery, ignoreCase = true) } == true)
+                                }
+                            }
                             LazyVerticalGrid(
                                 columns = GridCells.Adaptive(minSize = 140.dp),
                                 modifier = Modifier
@@ -163,7 +220,7 @@ class MainActivity : ComponentActivity() {
                                 verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp),
                                 horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp),
                             ) {
-                                items(sortedNotes, key = { it.id }) { note ->
+                                items(filteredNotes, key = { it.id }) { note ->
                                     NoteCard(
                                         note = note,
                                         onClick = {
