@@ -247,7 +247,6 @@ class MainActivity : ComponentActivity() {
                                         },
                                         onDeleteClick = { showDeleteDialogId = note.id },
                                         backgroundColor = colorForNote(note),
-                                        modifier = Modifier.pointerInput(Unit) {} // Consume click
                                     )
                                 }
                             }

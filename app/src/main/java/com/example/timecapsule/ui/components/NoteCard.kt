@@ -30,7 +30,6 @@ fun NoteCard(
     onClick: () -> Unit,
     onDeleteClick: () -> Unit,
     backgroundColor: Color,
-    modifier: Modifier = Modifier,
 ) {
     val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
     val cleanedText = note.text
