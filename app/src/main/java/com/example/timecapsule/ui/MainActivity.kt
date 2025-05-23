@@ -4,7 +4,8 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,6 +33,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import com.example.compose.AppTheme
 import com.example.timecapsule.data.AppDatabase
@@ -197,19 +199,26 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     ) { padding ->
-                        Column(
+                        Box(
                             Modifier
                                 .padding(padding)
                                 .fillMaxSize()
+                                .then(
+                                    if (isSearchActive) Modifier.pointerInput(Unit) {
+                                        detectTapGestures {
+                                            isSearchActive = false
+                                        }
+                                    } else Modifier
+                                )
                         ) {
                             val filteredNotes = if (searchQuery.isBlank()) {
                                 sortedNotes
                             } else {
                                 sortedNotes.filter { note ->
                                     (note.text?.contains(searchQuery, ignoreCase = true) == true) ||
-                                    (note.sourceTitle?.contains(searchQuery, ignoreCase = true) == true) ||
-                                    (note.author?.contains(searchQuery, ignoreCase = true) == true) ||
-                                    (note.tags?.any { it.contains(searchQuery, ignoreCase = true) } == true)
+                                            (note.sourceTitle?.contains(searchQuery, ignoreCase = true) == true) ||
+                                            (note.author?.contains(searchQuery, ignoreCase = true) == true) ||
+                                            (note.tags?.any { it.contains(searchQuery, ignoreCase = true) } == true)
                                 }
                             }
                             LazyVerticalGrid(
@@ -237,11 +246,13 @@ class MainActivity : ComponentActivity() {
                                             }
                                         },
                                         onDeleteClick = { showDeleteDialogId = note.id },
-                                        backgroundColor = colorForNote(note)
+                                        backgroundColor = colorForNote(note),
+                                        modifier = Modifier.pointerInput(Unit) {} // Consume click
                                     )
                                 }
                             }
                         }
+
                     }
                 }
 
