@@ -27,18 +27,6 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
 
-//        fun getInstance(context: Context): AppDatabase =
-//            INSTANCE ?: synchronized(this) {
-//                INSTANCE ?: Room.databaseBuilder(
-//                    context.applicationContext,
-//                    AppDatabase::class.java,
-//                    "notes.db"
-//                )
-//                    .addMigrations(MIGRATION_3_4)
-//                    .build()
-//                    .also { INSTANCE = it }
-//            }
-        // DestructiveMigration
         fun getInstance(context: Context): AppDatabase =
             INSTANCE ?: synchronized(this) {
                 INSTANCE ?: Room.databaseBuilder(
@@ -46,9 +34,21 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "notes.db"
                 )
-                .fallbackToDestructiveMigration() // wipes old database and creates a new one
-                .build()
-                .also { INSTANCE = it }
+                    .addMigrations(MIGRATION_3_4)
+                    .build()
+                    .also { INSTANCE = it }
             }
+        // DestructiveMigration
+//        fun getInstance(context: Context): AppDatabase =
+//            INSTANCE ?: synchronized(this) {
+//                INSTANCE ?: Room.databaseBuilder(
+//                    context.applicationContext,
+//                    AppDatabase::class.java,
+//                    "notes.db"
+//                )
+//                .fallbackToDestructiveMigration() // wipes old database and creates a new one
+//                .build()
+//                .also { INSTANCE = it }
+//            }
     }
 }
