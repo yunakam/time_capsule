@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -179,7 +180,7 @@ class MainActivity : ComponentActivity() {
                                     ) {
                                         FloatingActionButton(
                                             onClick = { showSettingsDialog = true },
-                                            modifier = Modifier.padding(end = 4.dp, bottom = 16.dp)
+                                            modifier = Modifier.padding(end = 12.dp, bottom = 16.dp)
                                                 .size(48.dp)
                                         ) {
                                             Icon(Icons.Default.Settings, contentDescription = "Settings")
@@ -188,14 +189,17 @@ class MainActivity : ComponentActivity() {
                                             FloatingActionButton(
                                                 onClick = { isSearchActive = true },
                                                 modifier = Modifier
-                                                    .padding(end = 16.dp, top = 4.dp)
+                                                    .padding(end = 16.dp, top = 12.dp)
                                                     .size(48.dp)
                                             ) {
                                                 Icon(Icons.Default.Search, contentDescription = "Search")
                                             }
                                             FloatingActionButton(
                                                 onClick = { showAddDialog = true },
-                                            ) {
+                                                shape = CircleShape,
+                                                modifier = Modifier
+                                                    .size(74.dp)
+                                                ) {
                                                 Icon(Icons.Default.Add, contentDescription = "Add")
                                             }
                                         }
