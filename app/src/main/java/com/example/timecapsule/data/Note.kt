@@ -19,5 +19,9 @@ data class Note(
 
     val createdAt: Date = Date(),
     val lastVisitedAt: Date? = null,
-    val visitCount: Int = 0
+    val visitCount: Int = 0,
+
+    val score: Int = 100,
+    val lastUpdated: Long = System.currentTimeMillis(),
+    val visitTimestamps: List<Long> = emptyList()
 )
