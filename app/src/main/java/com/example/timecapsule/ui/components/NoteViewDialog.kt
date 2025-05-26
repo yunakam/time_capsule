@@ -117,7 +117,6 @@ fun metaText(
                 fontStyle = FontStyle.Italic,
                 fontSize = fontSize,
                 color = color,
-                lineHeight = fontSize * 1.2,
                 maxLines = maxLines,
                 overflow = overflow,
                 modifier = effectiveModifier // Apply the constructed modifier
@@ -189,11 +188,12 @@ fun NoteViewDialog(
                                    Text(
                                        note.text,
                                        style = MaterialTheme.typography.bodyLarge,
+                                       modifier = Modifier.fillMaxWidth()
                                    )
                                }
                            }
 
-                           Spacer(Modifier.height(18.dp))
+                           Spacer(Modifier.height(14.dp))
 
                            // Optional fields with left padding
                            Column(

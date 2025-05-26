@@ -48,6 +48,7 @@ import com.example.timecapsule.data.AppDatabase
 import com.example.timecapsule.data.FilterType
 import com.example.timecapsule.data.Note
 import com.example.timecapsule.data.NoteRepository
+import com.example.timecapsule.data.NoteScore
 import com.example.timecapsule.data.PreferencesManager
 import com.example.timecapsule.ui.components.DeleteNoteDialog
 import com.example.timecapsule.ui.components.NoteCard
@@ -91,6 +92,32 @@ class MainActivity : ComponentActivity() {
                     NoteRepository(db.noteDao(), db.noteVisitDao())
                 }
 
+                // Update score for each note on app launch
+                LaunchedEffect(notes) {
+                    withContext(Dispatchers.IO) {
+                        notes.forEach { note ->
+                            // Construct NoteScore from note's properties
+                            val noteScore = NoteScore(
+                                score = note.score,
+                                lastUpdated = note.lastUpdated,
+                                visitTimestamps = note.visitTimestamps?.toMutableList() ?: mutableListOf()
+                            )
+                            val oldScore = note.score
+                            noteScore.calculateScore() // This will update the score if needed
+                            if (noteScore.calculateScore() != oldScore) {
+                                // Update note in DB if score changed
+                                db.noteDao().update(
+                                    note.copy(
+                                        score = noteScore.calculateScore(),
+                                        lastUpdated = noteScore.lastUpdated,
+                                        visitTimestamps = noteScore.visitTimestamps
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+
                 val topPageSetting by preferencesManager.topPageSettingFlow.collectAsState(initial = null)
 
                 val noteDao = db.noteDao()
@@ -113,7 +140,12 @@ class MainActivity : ComponentActivity() {
                                     if (notes.isNotEmpty()) {
                                         val randomNote = notes[Random.nextInt(notes.size)]
                                         withContext(Dispatchers.IO) {
-                                            noteRepository.logNoteVisit(randomNote.id)
+                                            noteRepository.logNoteVisitAndScore(randomNote.id)
+                                            val updatedNote = db.noteDao().getById(randomNote.id)
+                                            Log.d(
+                                                "NoteVisit",
+                                                "Note id: ${randomNote.id} is visited. Visit count: ${updatedNote?.visitCount ?: "?"}"
+                                            )
                                         }
                                         showViewDialogId = randomNote.id
                                     }
@@ -162,7 +194,7 @@ class MainActivity : ComponentActivity() {
                             onNoteClick = { note ->
                                 scope.launch {
                                     withContext(Dispatchers.IO) {
-                                        noteRepository.logNoteVisit(note.id)
+                                        noteRepository.logNoteVisitAndScore(note.id)
                                     }
                                     showViewDialogId = note.id
                                 }
@@ -275,7 +307,8 @@ class MainActivity : ComponentActivity() {
                                             onClick = {
                                                 scope.launch {
                                                     withContext(Dispatchers.IO) {
-                                                        noteRepository.logNoteVisit(note.id)
+                                                        // Update score on note visit
+                                                        noteRepository.logNoteVisitAndScore(note.id)
                                                         val updatedNote = db.noteDao().getById(note.id)
                                                         Log.d(
                                                             "NoteVisit",

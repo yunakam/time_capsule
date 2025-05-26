@@ -3,24 +3,25 @@ package com.example.timecapsule.data
 import kotlin.math.max
 import kotlin.math.min
 
-// This class manages the score of a note, representing how 'forgotten' the note is.
-// It can be updated based on visits and time decay.
+/**
+ * Represents the score of a note, which can be updated based on visits and time decay.
+ * The score starts at 100, can go up to 150, and decays over time.
+ */
 class NoteScore(
-    private var score: Int = 100,
-    private var lastUpdated: Long = System.currentTimeMillis(),
-    private val visitTimestamps: MutableList<Long> = mutableListOf()
+    var score: Int = 100,
+    var lastUpdated: Long = System.currentTimeMillis(),
+    val visitTimestamps: MutableList<Long> = mutableListOf()
 ) {
     companion object {
         private const val MAX_SCORE = 150
         private const val MIN_SCORE = 0
-        private const val INITIAL_SCORE = 100
         private const val MAX_RECOVERY_POINTS = 10
         private const val MIN_RECOVERY_POINTS = 1
         private const val DECAY_PER_DAY = 1
-        private const val RECOVERY_POINTS_WINDOW_DAYS = 30L // Recovery points resets after X days of no visits
+        private const val RECOVERY_POINTS_WINDOW_DAYS = 30L
     }
 
-    fun getScore(): Int {
+    fun calculateScore(): Int {
         updateScore()
         return score
     }
@@ -29,7 +30,7 @@ class NoteScore(
         updateScore()
         val now = System.currentTimeMillis()
         cleanupOldVisits(now)
-        val visitsInXDays = visitTimestamps.size
+        val visitsInXDays = visitTimestamps.size  // X: RECOVERY_POINTS_WINDOW_DAYS
         val recoveryPoints = max(MAX_RECOVERY_POINTS - visitsInXDays, MIN_RECOVERY_POINTS)
         score = min(score + recoveryPoints, MAX_SCORE)
         visitTimestamps.add(now)
@@ -47,7 +48,6 @@ class NoteScore(
     }
 
     private fun cleanupOldVisits(now: Long) {
-        // Remove visits older than X days
         val recoveryPointsWindowDaysMillis = RECOVERY_POINTS_WINDOW_DAYS * 24 * 60 * 60 * 1000
         visitTimestamps.removeAll { it < now - recoveryPointsWindowDaysMillis }
     }
