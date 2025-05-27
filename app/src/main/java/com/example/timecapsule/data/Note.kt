@@ -10,11 +10,15 @@ import java.util.Date
 data class Note(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val text: String = "",
-    val author: String? = null,
-    val sourceTitle: String? = null,
-    val sourceUrl: String? = null,
+    // val author: String? = null,
+    val saidWho: String? = null,
+    //val sourceTitle: String? = null,
+    val title: String? = null,
+    val source: String? = null,
+    //val sourceUrl: String? = null,
+    val url: String? = null,
     val page: String? = null,
-    val publisher: String? = null,
+    //val publisher: String? = null,
     val tags: List<String>? = null, // store as a list
 
     val createdAt: Date = Date(),

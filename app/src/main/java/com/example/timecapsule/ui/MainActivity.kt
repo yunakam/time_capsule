@@ -304,8 +304,8 @@ class MainActivity : ComponentActivity() {
                                 } else {
                                     sortedNotes.filter { note ->
                                         (note.text?.contains(searchQuery, ignoreCase = true) == true) ||
-                                                (note.sourceTitle?.contains(searchQuery, ignoreCase = true) == true) ||
-                                                (note.author?.contains(searchQuery, ignoreCase = true) == true) ||
+                                                (note.title?.contains(searchQuery, ignoreCase = true) == true) ||
+                                                (note.saidWho?.contains(searchQuery, ignoreCase = true) == true) ||
                                                 (note.tags?.any { it.contains(searchQuery, ignoreCase = true) } == true)
                                     }
                                 }
@@ -376,10 +376,10 @@ class MainActivity : ComponentActivity() {
                                 showDeleteDialogId = note.id
                             },
                             onDismiss = { showViewDialogId = null },
-                            onFilterByAuthor = { author ->
+                            onFilterByAuthor = { saidWho ->
                                 showViewDialogId = null
                                 currentFilterType = FilterType.AUTHOR
-                                currentFilterValue = author
+                                currentFilterValue = saidWho
                                 showFilteredNotesScreen = true
                             },
                             onFilterByTitle = { title ->

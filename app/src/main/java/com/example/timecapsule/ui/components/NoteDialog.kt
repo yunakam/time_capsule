@@ -50,27 +50,27 @@ fun NoteDialog(
     onCancel: (() -> Unit)? = null,
 ) {
     var text by remember { mutableStateOf(initialNote.text) }
-    var author by remember { mutableStateOf(initialNote.author ?: "") }
-    var sourceTitle by remember { mutableStateOf(initialNote.sourceTitle ?: "") }
-    var sourceUrl by remember { mutableStateOf(initialNote.sourceUrl ?: "") }
+    var saidWho by remember { mutableStateOf(initialNote.saidWho ?: "") }
+    var title by remember { mutableStateOf(initialNote.title ?: "") }
+    var url by remember { mutableStateOf(initialNote.url ?: "") }
     var page by remember { mutableStateOf(initialNote.page ?: "") }
-    var publisher by remember { mutableStateOf(initialNote.publisher ?: "") }
+    var source by remember { mutableStateOf(initialNote.source ?: "") }
     var confirmedTags by remember { mutableStateOf(initialNote.tags ?: emptyList()) }
     var tagInput by remember { mutableStateOf("") }
 
     // Error state for validation
     var showTitleMissingError by remember { mutableStateOf(false) }
-    // FocusRequester for the sourceTitle field
+    // FocusRequester for the title field
     val titleFocusRequester = remember { FocusRequester() }
 
     // For Edit: reset fields when note changes
     LaunchedEffect(initialNote) {
         text = initialNote.text
-        author = initialNote.author ?: ""
-        sourceTitle = initialNote.sourceTitle ?: ""
-        sourceUrl = initialNote.sourceUrl ?: ""
+        saidWho = initialNote.saidWho ?: ""
+        title = initialNote.title ?: ""
+        url = initialNote.url ?: ""
         page = initialNote.page ?: ""
-        publisher = initialNote.publisher ?: ""
+        source = initialNote.source ?: ""
         confirmedTags = initialNote.tags ?: emptyList()
         tagInput = ""
         showTitleMissingError = false
@@ -83,9 +83,9 @@ fun NoteDialog(
         }
     }
 
-    val authorSuggestions by rememberSuggestions(author) { noteDao.getAuthorSuggestions(it) }
-    val titleSuggestions by rememberSuggestions(sourceTitle) { noteDao.getTitleSuggestions(it) }
-    val publisherSuggestions by rememberSuggestions(publisher) { noteDao.getPublisherSuggestions(it) }
+    val saidWhoSuggestions by rememberSuggestions(saidWho) { noteDao.getSaidWhoSuggestions(it) }
+    val titleSuggestions by rememberSuggestions(title) { noteDao.getTitleSuggestions(it) }
+    val sourceSuggestions by rememberSuggestions(source) { noteDao.getPublisherSuggestions(it) }
 
     // --- Tag Chip Logic ---
     val allTagsRaw by produceState(initialValue = emptyList<String?>()) {
@@ -106,17 +106,17 @@ fun NoteDialog(
     } else emptyList()
 
     val fields = listOf(
-        FieldSpec(author, { author = it }, "Author", suggestions = authorSuggestions, onSuggestionClick = { author = it }),
+        FieldSpec(saidWho, { saidWho = it }, "saidWho", suggestions = saidWhoSuggestions, onSuggestionClick = { saidWho = it }),
         FieldSpec(
-            sourceTitle,
-            { sourceTitle = it },
+            title,
+            { title = it },
             "Title",
             modifier = Modifier.focusRequester(titleFocusRequester),
             suggestions = titleSuggestions,
-            onSuggestionClick = { sourceTitle = it }),
+            onSuggestionClick = { title = it }),
         FieldSpec(page, { page = it.filter { it.isDigit() } }, "Page", keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)),
-        FieldSpec(publisher, { publisher = it }, "Publisher", suggestions = publisherSuggestions, onSuggestionClick = { publisher = it }),
-        FieldSpec(sourceUrl, { sourceUrl = it }, "URL", keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)),
+        FieldSpec(source, { source = it }, "Publisher", suggestions = sourceSuggestions, onSuggestionClick = { source = it }),
+        FieldSpec(url, { url = it }, "URL", keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)),
         FieldSpec(
             tagInput,
             { input ->
@@ -239,18 +239,18 @@ fun NoteDialog(
                     Button(
                         onClick = {
                             // Validation logic
-                            val isSourceTitleMandatory = page.isNotBlank() || publisher.isNotBlank()
-                            if (isSourceTitleMandatory && sourceTitle.isBlank()) {
+                            val isSourceTitleMandatory = page.isNotBlank() || source.isNotBlank()
+                            if (isSourceTitleMandatory && title.isBlank()) {
                                 showTitleMissingError = true
                             } else {
                                 showTitleMissingError = false
                                 val newNote = initialNote.copy(
                                     text = text,
-                                    author = author.ifBlank { null },
-                                    sourceTitle = sourceTitle.ifBlank { null },
-                                    sourceUrl = sourceUrl.ifBlank { null },
+                                    saidWho = saidWho.ifBlank { null },
+                                    title = title.ifBlank { null },
+                                    url = url.ifBlank { null },
                                     page = page.ifBlank { null },
-                                    publisher = publisher.ifBlank { null },
+                                    source = source.ifBlank { null },
                                     tags = confirmedTags.takeIf { it.isNotEmpty() }
                                 )
                                 onSave(newNote)

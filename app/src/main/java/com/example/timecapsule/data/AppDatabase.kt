@@ -22,9 +22,45 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
     }
 }
 
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        // 1. Create new table with new column names
+        database.execSQL("""
+            CREATE TABLE notes_new (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                text TEXT NOT NULL,
+                saidWho TEXT,
+                title TEXT,
+                source TEXT,
+                page TEXT,
+                url TEXT,
+                tags TEXT,
+                createdAt INTEGER NOT NULL,
+                lastVisitedAt INTEGER,
+                visitCount INTEGER NOT NULL,
+                score INTEGER NOT NULL,
+                lastUpdated INTEGER NOT NULL,
+                visitTimestamps TEXT NOT NULL
+            )
+        """.trimIndent())
+
+        // 2. Copy data from old table to new table, mapping old columns to new ones
+        database.execSQL("""
+            INSERT INTO notes_new (id, text, saidWho, title, source, page, url, tags, createdAt, lastVisitedAt, visitCount, score, lastUpdated, visitTimestamps)
+            SELECT id, text, author, sourceTitle, publisher, page, sourceUrl, tags, createdAt, lastVisitedAt, visitCount, score, lastUpdated, visitTimestamps FROM notes
+        """.trimIndent())
+
+        // 3. Drop old table
+        database.execSQL("DROP TABLE notes")
+
+        // 4. Rename new table to old table name
+        database.execSQL("ALTER TABLE notes_new RENAME TO notes")
+    }
+}
+
 @Database(
     entities = [Note::class, NoteVisit::class],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -42,7 +78,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "notes.db"
                 )
-                    .addMigrations(MIGRATION_3_4, MIGRATION_4_5)
+                    .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                     .build()
                     .also { INSTANCE = it }
             }

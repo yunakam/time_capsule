@@ -200,7 +200,7 @@ fun NoteViewDialog(
                                modifier = Modifier.padding(start = 16.dp),
                                verticalArrangement = Arrangement.spacedBy(0.dp)
                            ) {
-                               note.author?.takeIf { it.isNotBlank() }?.let {
+                               note.saidWho?.takeIf { it.isNotBlank() }?.let {
                                    metaText(
                                        "- $it",
                                        fontSize = 16.sp,
@@ -210,31 +210,31 @@ fun NoteViewDialog(
 
                                Spacer(Modifier.height(6.dp))
 
-                               note.sourceTitle?.takeIf { it.isNotBlank() }?.let { sourceTitle ->
+                               note.title?.takeIf { it.isNotBlank() }?.let { title ->
                                    val details = listOfNotNull(
                                        note.page?.takeIf { it.isNotBlank() }?.let { "page $it" },
-                                       note.publisher?.takeIf { it.isNotBlank() }
+                                       note.source?.takeIf { it.isNotBlank() }
                                    ).takeIf { it.isNotEmpty() }
                                        ?.joinToString(", ", prefix = " (", postfix = ")") ?: ""
                                    val fullString = buildString {
                                        append('"')
-                                       append(sourceTitle)
+                                       append(title)
                                        append('"')
                                        if (details.isNotBlank()) append(details)
                                    }
                                    metaText(
                                        text = fullString,
-                                       modifier = Modifier.clickable { onFilterByTitle(sourceTitle) }
+                                       modifier = Modifier.clickable { onFilterByTitle(title) }
                                    )
                                }
 
                                Spacer(Modifier.height(12.dp))
-                               note.sourceUrl?.takeIf { it.isNotBlank() }?.let {
+                               note.url?.takeIf { it.isNotBlank() }?.let {
                                    metaText(it)
                                }
 
                                // Link icon
-                               // NoteSourceLink(sourceUrl = note.sourceUrl)
+                               // NoteSourceLink(url = note.url)
 
                                Spacer(Modifier.height(24.dp))
                                note.tags?.takeIf { it.isNotEmpty() }?.let { tags ->
@@ -300,9 +300,9 @@ fun formatDate(date: Date?): String =
 
 // for link icon
 @Composable
-fun NoteSourceLink(sourceUrl: String?, modifier: Modifier = Modifier) {
+fun NoteSourceLink(url: String?, modifier: Modifier = Modifier) {
     val uriHandler = LocalUriHandler.current
-    sourceUrl?.takeIf { it.isNotBlank() }?.let { url ->
+    url?.takeIf { it.isNotBlank() }?.let { url ->
         Icon(
             painter = painterResource(id = R.drawable.ic_link),
             contentDescription = "Open Source Link",

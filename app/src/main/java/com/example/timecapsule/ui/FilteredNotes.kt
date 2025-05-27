@@ -46,8 +46,8 @@ fun FilteredNotesScreen(
         derivedStateOf {
             allNotes.filter { note ->
                 when (filterType) {
-                    FilterType.AUTHOR -> note.author?.equals(filterValue, ignoreCase = true) == true
-                    FilterType.SOURCE_TITLE -> note.sourceTitle?.equals(filterValue, ignoreCase = true) == true
+                    FilterType.AUTHOR -> note.saidWho?.equals(filterValue, ignoreCase = true) == true
+                    FilterType.SOURCE_TITLE -> note.title?.equals(filterValue, ignoreCase = true) == true
                     FilterType.TAG -> note.tags?.any { it.equals(filterValue, ignoreCase = true) } == true
                 }
             }.sortedByDescending { it.createdAt } // Keep consistent sorting
