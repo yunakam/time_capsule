@@ -1,9 +1,11 @@
 package com.example.timecapsule.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -12,8 +14,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -30,25 +30,27 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.timecapsule.data.Note
 import com.example.timecapsule.data.NoteDao
 import com.google.accompanist.flowlayout.FlowRow
+import kotlin.random.Random
 
 
 @Composable
 fun NoteDialog(
-    title: String = "",
+//    title: String = "",
     initialNote: Note = Note(),
     onSave: (Note) -> Unit,
     onDismiss: () -> Unit,
     noteDao: NoteDao,
     onCancel: (() -> Unit)? = null,
 ) {
+    var category by remember { mutableStateOf("BOOK") }
+    val categories = listOf("BOOK", "WEB", "TALK", "THOUGHTS")
+
     var text by remember { mutableStateOf(initialNote.text) }
     var saidWho by remember { mutableStateOf(initialNote.saidWho ?: "") }
     var title by remember { mutableStateOf(initialNote.title ?: "") }
@@ -85,7 +87,7 @@ fun NoteDialog(
 
     val saidWhoSuggestions by rememberSuggestions(saidWho) { noteDao.getSaidWhoSuggestions(it) }
     val titleSuggestions by rememberSuggestions(title) { noteDao.getTitleSuggestions(it) }
-    val sourceSuggestions by rememberSuggestions(source) { noteDao.getPublisherSuggestions(it) }
+    val sourceSuggestions by rememberSuggestions(source) { noteDao.getSourceSuggestions(it) }
 
     // --- Tag Chip Logic ---
     val allTagsRaw by produceState(initialValue = emptyList<String?>()) {
@@ -105,52 +107,52 @@ fun NoteDialog(
         allTags.filter { it.startsWith(tagInput, ignoreCase = true) && !confirmedTags.contains(it) }.take(10)
     } else emptyList()
 
-    val fields = listOf(
-        FieldSpec(saidWho, { saidWho = it }, "saidWho", suggestions = saidWhoSuggestions, onSuggestionClick = { saidWho = it }),
-        FieldSpec(
-            title,
-            { title = it },
-            "Title",
-            modifier = Modifier.focusRequester(titleFocusRequester),
-            suggestions = titleSuggestions,
-            onSuggestionClick = { title = it }),
-        FieldSpec(page, { page = it.filter { it.isDigit() } }, "Page", keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)),
-        FieldSpec(source, { source = it }, "Publisher", suggestions = sourceSuggestions, onSuggestionClick = { source = it }),
-        FieldSpec(url, { url = it }, "URL", keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)),
-        FieldSpec(
-            tagInput,
-            { input ->
-                // Handle ',' character to add tag
-                if (input.endsWith(",")) {
-                    val trimmed = input.trimEnd(',')
-                    if (trimmed.isNotEmpty() && !confirmedTags.contains(trimmed)) {
-                        confirmedTags = confirmedTags + trimmed
-                    }
-                    tagInput = ""
-                } else {
-                    tagInput = input
-                }
-            },
-            "Tag",
-            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(
-                onDone = {
-                    val trimmed = tagInput.trim()
-                    if (trimmed.isNotEmpty() && !confirmedTags.contains(trimmed)) {
-                        confirmedTags = confirmedTags + trimmed
-                    }
-                    tagInput = ""
-                }
-            ),
-            suggestions = tagSuggestions,
-            onSuggestionClick = { suggestion ->
-                if (!confirmedTags.contains(suggestion)) {
-                    confirmedTags = confirmedTags + suggestion
-                }
-                tagInput = ""
-            }
-        ),
-        )
+//    val fields = listOf(
+//        FieldSpec(saidWho, { saidWho = it }, "saidWho", suggestions = saidWhoSuggestions, onSuggestionClick = { saidWho = it }),
+//        FieldSpec(
+//            title,
+//            { title = it },
+//            "Title",
+//            modifier = Modifier.focusRequester(titleFocusRequester),
+//            suggestions = titleSuggestions,
+//            onSuggestionClick = { title = it }),
+//        FieldSpec(page, { page = it.filter { it.isDigit() } }, "Page", keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)),
+//        FieldSpec(source, { source = it }, "Publisher", suggestions = sourceSuggestions, onSuggestionClick = { source = it }),
+//        FieldSpec(url, { url = it }, "URL", keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)),
+//        FieldSpec(
+//            tagInput,
+//            { input ->
+//                // Handle ',' character to add tag
+//                if (input.endsWith(",")) {
+//                    val trimmed = input.trimEnd(',')
+//                    if (trimmed.isNotEmpty() && !confirmedTags.contains(trimmed)) {
+//                        confirmedTags = confirmedTags + trimmed
+//                    }
+//                    tagInput = ""
+//                } else {
+//                    tagInput = input
+//                }
+//            },
+//            "Tag",
+//            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+//            keyboardActions = KeyboardActions(
+//                onDone = {
+//                    val trimmed = tagInput.trim()
+//                    if (trimmed.isNotEmpty() && !confirmedTags.contains(trimmed)) {
+//                        confirmedTags = confirmedTags + trimmed
+//                    }
+//                    tagInput = ""
+//                }
+//            ),
+//            suggestions = tagSuggestions,
+//            onSuggestionClick = { suggestion ->
+//                if (!confirmedTags.contains(suggestion)) {
+//                    confirmedTags = confirmedTags + suggestion
+//                }
+//                tagInput = ""
+//            }
+//        ),
+//        )
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -170,23 +172,99 @@ fun NoteDialog(
                         .verticalScroll(rememberScrollState())
                 ) {
                     Spacer(modifier = Modifier.height(12.dp))
+
+                    // Random quote placeholder for the text field
+                    val randomPlaceholder = remember { TextfieldPlaceholders.quotes[Random.nextInt(TextfieldPlaceholders.quotes.size)] }
+
                     OutlinedTextField(
                         value = text,
                         onValueChange = { text = it },
-                        label = { Text(title) },
+                        placeholder = { 
+                            Text(
+                                text = randomPlaceholder,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                            )
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
+                            .fillMaxHeight()
                             .heightIn(min = 180.dp),
                         singleLine = false,
                         maxLines = 10,
                     )
+
+                    Spacer(Modifier.height(12.dp))
+
+                    // Category selection
+                    Row(
+                        Modifier
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        categories.forEach { cat ->
+                            val isSelected = category == cat
+                            OutlinedButton(
+                                onClick = { category = cat },
+                                enabled = true,
+                                modifier = Modifier
+                                    .padding(horizontal = 2.dp)
+                                    .widthIn(min = 56.dp),
+                                colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                                    containerColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surface,
+                                    contentColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                                    disabledContainerColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surface,
+                                    disabledContentColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                ),
+                                border = BorderStroke(
+                                    width = if (isSelected) 2.dp else 1.dp,
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                                ),
+                                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 6.dp, vertical = 4.dp) // Reduce padding
+                            ) { 
+                                Text(
+                                    text = cat,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    fontSize = MaterialTheme.typography.bodySmall.fontSize // Use smaller font size
+                                )
+                            }
+                        }
+                    }
+                    
+                    val fields = when (category) {
+
+                        "BOOK" -> listOf(
+                            FieldSpec(saidWho, { saidWho = it }, "saidWho", suggestions = saidWhoSuggestions, onSuggestionClick = { saidWho = it }),
+                            FieldSpec(title, { title = it }, "Title", suggestions = titleSuggestions, onSuggestionClick = { title = it }),
+                            FieldSpec(source, { source = it }, "Publisher", suggestions = sourceSuggestions, onSuggestionClick = { source = it }),
+                            FieldSpec(page, { page = it }, "Page")
+                        )
+                        "WEB" -> listOf(
+                            FieldSpec(saidWho, { saidWho = it }, "saidWho", suggestions = saidWhoSuggestions, onSuggestionClick = { saidWho = it }),
+                            FieldSpec(title, { title = it }, "Title", suggestions = titleSuggestions, onSuggestionClick = { title = it }),
+                            FieldSpec(source, { source = it }, "Website", suggestions = sourceSuggestions, onSuggestionClick = { source = it }),
+                            FieldSpec(url, { url = it }, "URL")
+                        )
+                        "TALK" -> listOf(
+                            FieldSpec(saidWho, { saidWho = it }, "saidWho", suggestions = saidWhoSuggestions, onSuggestionClick = { saidWho = it }),
+                            FieldSpec(title, { title = it }, "Title", suggestions = titleSuggestions, onSuggestionClick = { title = it }),
+                            FieldSpec(source, { source = it }, "Channel")
+                        )
+                        "THOUGHTS" -> listOf(
+                            FieldSpec(source, { source = it }, "Where?", maxLines = 3)
+                        )
+                        else -> emptyList()
+                    }
+
                     Spacer(modifier = Modifier.height(18.dp))
-                    fields.forEachIndexed { idx, (value, onChange, label, modifier, keyboardOptions, keyboardActions, suggestions, onSuggestionClick) ->
+                    fields.forEachIndexed { idx, (value, onChange, label, modifier, maxLines, keyboardOptions, keyboardActions, suggestions, onSuggestionClick) ->
                         OptionalTextField(
                             value = value,
                             onValueChange = onChange,
                             label = label,
                             modifier = modifier,
+                            maxLines = maxLines,
                             keyboardOptions = keyboardOptions,
                             keyboardActions = keyboardActions,
                             suggestions = suggestions,
@@ -204,7 +282,7 @@ fun NoteDialog(
                         }
 
                         if (idx < fields.size - 1) {
-                            Spacer(modifier = Modifier.height(0.dp))
+                            Spacer(modifier = Modifier.height(4.dp)) // Reduce spacing between fields
                         }
                     }
 
@@ -227,7 +305,7 @@ fun NoteDialog(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(

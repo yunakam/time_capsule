@@ -10,8 +10,9 @@ data class FieldSpec(
     val onValueChange: (String) -> Unit,
     val label: String,
     val modifier: Modifier = Modifier,
+    val maxLines: Int = 1,
     val keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     val keyboardActions: KeyboardActions = KeyboardActions.Default,
     val suggestions: List<String> = emptyList(),
-    val onSuggestionClick: ((String) -> Unit)? = null
+    val onSuggestionClick: ((String) -> Unit)? = null,
 )

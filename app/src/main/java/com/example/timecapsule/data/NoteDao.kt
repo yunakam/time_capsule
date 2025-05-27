@@ -36,7 +36,7 @@ interface NoteDao {
     suspend fun getTitleSuggestions(query: String): List<String>
 
     @Query("SELECT DISTINCT source FROM notes WHERE source LIKE :query || '%' ORDER BY source LIMIT 10")
-    suspend fun getPublisherSuggestions(query: String): List<String>
+    suspend fun getSourceSuggestions(query: String): List<String>
 
     @Query("SELECT tags FROM notes")
     suspend fun getAllTagsRaw(): List<String?>
