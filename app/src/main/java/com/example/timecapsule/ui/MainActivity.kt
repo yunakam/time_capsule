@@ -136,7 +136,7 @@ class MainActivity : ComponentActivity() {
                         if (!didShowStartupDialog) {
                             when (topPageSetting) {
                                 TopPageSetting.ADD_NOTE_DIALOG -> showAddDialog = true
-                                TopPageSetting.RANDOM_NOTE_VIEW -> {
+                                TopPageSetting.RANDOM_NOTE -> {
                                     if (notes.isNotEmpty()) {
                                         val randomNote = notes[Random.nextInt(notes.size)]
                                         withContext(Dispatchers.IO) {
@@ -148,6 +148,22 @@ class MainActivity : ComponentActivity() {
                                             )
                                         }
                                         showViewDialogId = randomNote.id
+                                    }
+                                }
+                                TopPageSetting.LOWEST_SCORE_NOTE -> {
+                                    if (notes.isNotEmpty()) {
+                                        val minScore = notes.minOf { it.score }
+                                        val lowestScoreNotes = notes.filter { it.score == minScore }
+                                        val noteToShow = lowestScoreNotes.random()
+                                        withContext(Dispatchers.IO) {
+                                            noteRepository.logNoteVisitAndScore(noteToShow.id)
+                                            val updatedNote = db.noteDao().getById(noteToShow.id)
+                                            Log.d(
+                                                "NoteVisit",
+                                                "Note id: ${noteToShow.id} is visited. Visit count: ${updatedNote?.visitCount ?: "?"}"
+                                            )
+                                        }
+                                        showViewDialogId = noteToShow.id
                                     }
                                 }
                                 TopPageSetting.NOTE_LIST -> { /* Do nothing */ }
