@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -25,6 +26,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -105,14 +107,15 @@ fun <T> SettingItemChoice(
                                         pendingChoice = choice.value as T
                                     }
                                 )
-                            }
+                            },
+                            modifier = Modifier.padding(vertical = 0.dp),
                         )
                     }
                 }
             },
             confirmButton = {
                 Row {
-                    Button(onClick = { showChoiceDialog = false }) {
+                    TextButton(onClick = { showChoiceDialog = false }) {
                         Text("Cancel")
                     }
                     Spacer(Modifier.width(8.dp))
@@ -202,11 +205,23 @@ fun SettingsDialog(
                     .heightIn(max = 600.dp)
                     .padding(vertical = 24.dp)
             ) {
-                Text(
-                    text = "Settings",
-                    style = MaterialTheme.typography.headlineSmall,
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(horizontal = 24.dp)
-                )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back",
+                        modifier = Modifier
+                            .clickable { onDismiss() }
+                            .padding(end = 8.dp)
+                    )
+                    Text(
+                        text = "Settings",
+                        style = MaterialTheme.typography.headlineSmall,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
                 Spacer(Modifier.height(16.dp))
                 Column(
                     modifier = Modifier
