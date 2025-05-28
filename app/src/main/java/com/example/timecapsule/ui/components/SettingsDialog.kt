@@ -232,7 +232,7 @@ fun SettingsDialog(
                         title = "Upon launch",
                         choices = listOf(
                             Choice("New note", OnLaunch.ADD_NOTE_DIALOG),
-                            Choice("Note buried deep in the ground", OnLaunch.LOWEST_SCORE_NOTE),
+                            Choice("Deepest buried note", OnLaunch.LOWEST_SCORE_NOTE),
                             Choice("Random note", OnLaunch.RANDOM_NOTE),
                             Choice("None", OnLaunch.NOTE_LIST)
                         ),
