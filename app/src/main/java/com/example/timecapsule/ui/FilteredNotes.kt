@@ -47,7 +47,7 @@ fun FilteredNotesScreen(
             allNotes.filter { note ->
                 when (filterType) {
                     FilterType.AUTHOR -> note.saidWho?.equals(filterValue, ignoreCase = true) == true
-                    FilterType.SOURCE_TITLE -> note.title?.equals(filterValue, ignoreCase = true) == true
+                    FilterType.TITLE -> note.title?.equals(filterValue, ignoreCase = true) == true
                     FilterType.TAG -> note.tags?.any { it.equals(filterValue, ignoreCase = true) } == true
                 }
             }.sortedByDescending { it.createdAt } // Keep consistent sorting
@@ -62,7 +62,7 @@ fun FilteredNotesScreen(
                         "${
                             when (filterType) {
                                 FilterType.AUTHOR -> "Author"
-                                FilterType.SOURCE_TITLE -> "Title"
+                                FilterType.TITLE -> "Title"
                                 FilterType.TAG -> "Tag"
                             }
                         }: $filterValue",

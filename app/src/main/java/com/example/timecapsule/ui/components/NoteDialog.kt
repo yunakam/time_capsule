@@ -242,19 +242,20 @@ fun NoteDialog(
                             FieldSpec(source, { source = it }, "Channel")
                         ) + tagField
                         "THOUGHTS" -> listOf(
-                            FieldSpec(source, { source = it }, "Where?", maxLines = 3)
+                            FieldSpec(source, { source = it }, "Where?", maxLines = 3, singleLine = false)
                         ) + tagField
                         else -> emptyList()
                     }
 
                     Spacer(modifier = Modifier.height(18.dp))
-                    fields.forEachIndexed { idx, (value, onChange, label, modifier, maxLines, keyboardOptions, keyboardActions, suggestions, onSuggestionClick) ->
+                    fields.forEachIndexed { idx, (value, onChange, label, modifier, maxLines, singleLine, keyboardOptions, keyboardActions, suggestions, onSuggestionClick) ->
                         OptionalTextField(
                             value = value,
                             onValueChange = onChange,
                             label = label,
                             modifier = modifier,
                             maxLines = maxLines,
+                            singleLine = singleLine,
                             keyboardOptions = keyboardOptions,
                             keyboardActions = keyboardActions,
                             suggestions = suggestions,

@@ -11,6 +11,7 @@ data class FieldSpec(
     val label: String,
     val modifier: Modifier = Modifier,
     val maxLines: Int = 1,
+    val singleLine: Boolean = true,
     val keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     val keyboardActions: KeyboardActions = KeyboardActions.Default,
     val suggestions: List<String> = emptyList(),

@@ -60,6 +60,7 @@ fun OptionalTextField(
     modifier: Modifier = Modifier
         .fillMaxWidth(),
     maxLines: Int = 1,
+    singleLine: Boolean = true,
     ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
@@ -118,6 +119,7 @@ fun OptionalTextField(
                 keyboardOptions = keyboardOptions,
                 keyboardActions = keyboardActions,
                 maxLines = maxLines,
+                singleLine = singleLine,
                 textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp),
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,

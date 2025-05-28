@@ -1,11 +1,11 @@
 package com.example.timecapsule.ui.components
 
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -46,9 +46,9 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.core.net.toUri
 import com.example.timecapsule.R
 import com.example.timecapsule.data.Note
-import com.google.accompanist.flowlayout.FlowRow
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -93,7 +93,7 @@ fun metaText(
                     TextButton(
                         onClick = {
                             showDialog = false
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(text))
+                            val intent = Intent(Intent.ACTION_VIEW, text.toUri())
                             context.startActivity(intent)
                         }
                     ) { Text("Open") }
@@ -210,24 +210,59 @@ fun NoteViewDialog(
 
                                Spacer(Modifier.height(6.dp))
 
-                               note.title?.takeIf { it.isNotBlank() }?.let { title ->
-                                   val details = listOfNotNull(
-                                       note.page?.takeIf { it.isNotBlank() }?.let { "page $it" },
-                                       note.source?.takeIf { it.isNotBlank() }
-                                   ).takeIf { it.isNotEmpty() }
-                                       ?.joinToString(", ", prefix = " (", postfix = ")") ?: ""
+//                               note.title?.takeIf { it.isNotBlank() }?.let { title ->
+//                                   val details = listOfNotNull(
+//                                       note.page?.takeIf { it.isNotBlank() }?.let { "page $it" },
+//                                       note.source?.takeIf { it.isNotBlank() }
+//                                   ).takeIf { it.isNotEmpty() }
+//                                       ?.joinToString(", ", prefix = " (", postfix = ")") ?: ""
+//                                   val fullString = buildString {
+//                                       append('"')
+//                                       append(title)
+//                                       append('"')
+//                                       if (details.isNotBlank()) append(details)
+//                                   }
+//                                   metaText(
+//                                       text = fullString,
+//                                       modifier = Modifier.clickable { onFilterByTitle(title) }
+//                                   )
+//                               } ?: run {
+//                                   // If no title, just show page/source if available
+//                                   val details = listOfNotNull(
+//                                       note.page?.takeIf { it.isNotBlank() }?.let { "page $it" },
+//                                       note.source?.takeIf { it.isNotBlank() }
+//                                   )
+//                                       .joinToString(", ")
+//                                   if (details.isNotBlank()) {
+//                                       metaText(details)
+//                                   }
+//                               }
+
+                               val details = listOfNotNull(
+                                   note.page?.takeIf { it.isNotBlank() }?.let { "page $it" },
+                                   note.source?.takeIf { it.isNotBlank() }
+                               )
+                               val detailsString = when {
+                                   details.isEmpty() -> ""
+                                   note.title.isNullOrBlank() -> details.joinToString(", ")
+                                   else -> details.joinToString(", ", prefix = " (", postfix = ")")
+                               }
+
+                               if (!note.title.isNullOrBlank()) {
                                    val fullString = buildString {
                                        append('"')
-                                       append(title)
+                                       append(note.title)
                                        append('"')
-                                       if (details.isNotBlank()) append(details)
+                                       if (detailsString.isNotBlank()) append(detailsString)
                                    }
                                    metaText(
                                        text = fullString,
-                                       modifier = Modifier.clickable { onFilterByTitle(title) }
+                                       modifier = Modifier.clickable { onFilterByTitle(note.title) }
                                    )
+                               } else if (detailsString.isNotBlank()) {
+                                   metaText(detailsString)
                                }
-
+                               
                                Spacer(Modifier.height(12.dp))
                                note.url?.takeIf { it.isNotBlank() }?.let {
                                    metaText(it)
@@ -239,8 +274,8 @@ fun NoteViewDialog(
                                Spacer(Modifier.height(24.dp))
                                note.tags?.takeIf { it.isNotEmpty() }?.let { tags ->
                                    FlowRow(
-                                       mainAxisSpacing = 8.dp,
-                                       crossAxisSpacing = 8.dp,
+                                       horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                       verticalArrangement = Arrangement.spacedBy(8.dp),
                                    ) {
                                        tags.forEach { tag ->
                                            Box(

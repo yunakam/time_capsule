@@ -387,7 +387,7 @@ class MainActivity : ComponentActivity() {
                             },
                             onFilterByTitle = { title ->
                                 showViewDialogId = null
-                                currentFilterType = FilterType.SOURCE_TITLE
+                                currentFilterType = FilterType.TITLE
                                 currentFilterValue = title
                                 showFilteredNotesScreen = true
                             },
