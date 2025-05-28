@@ -3,6 +3,7 @@ package com.example.timecapsule.ui.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -14,6 +15,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -31,11 +34,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.timecapsule.data.Note
 import com.example.timecapsule.data.NoteDao
-import com.google.accompanist.flowlayout.FlowRow
 import kotlin.random.Random
 
 
@@ -231,7 +234,41 @@ fun NoteDialog(
                             }
                         }
                     }
-                    
+
+                    val tagField = FieldSpec(
+                        tagInput,
+                        { input ->
+                            // Handle ',' character to add tag
+                            if (input.endsWith(",")) {
+                                val trimmed = input.trimEnd(',')
+                                if (trimmed.isNotEmpty() && !confirmedTags.contains(trimmed)) {
+                                    confirmedTags = confirmedTags + trimmed
+                                }
+                                tagInput = ""
+                            } else {
+                                tagInput = input
+                            }
+                        },
+                        "Tag",
+                        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                val trimmed = tagInput.trim()
+                                if (trimmed.isNotEmpty() && !confirmedTags.contains(trimmed)) {
+                                    confirmedTags = confirmedTags + trimmed
+                                }
+                                tagInput = ""
+                            }
+                        ),
+                        suggestions = tagSuggestions,
+                        onSuggestionClick = { suggestion ->
+                            if (!confirmedTags.contains(suggestion)) {
+                                confirmedTags = confirmedTags + suggestion
+                            }
+                            tagInput = ""
+                        }
+                    )
+
                     val fields = when (category) {
 
                         "BOOK" -> listOf(
@@ -239,21 +276,21 @@ fun NoteDialog(
                             FieldSpec(title, { title = it }, "Title", suggestions = titleSuggestions, onSuggestionClick = { title = it }),
                             FieldSpec(source, { source = it }, "Publisher", suggestions = sourceSuggestions, onSuggestionClick = { source = it }),
                             FieldSpec(page, { page = it }, "Page")
-                        )
+                        ) + tagField
                         "WEB" -> listOf(
                             FieldSpec(saidWho, { saidWho = it }, "saidWho", suggestions = saidWhoSuggestions, onSuggestionClick = { saidWho = it }),
                             FieldSpec(title, { title = it }, "Title", suggestions = titleSuggestions, onSuggestionClick = { title = it }),
                             FieldSpec(source, { source = it }, "Website", suggestions = sourceSuggestions, onSuggestionClick = { source = it }),
                             FieldSpec(url, { url = it }, "URL")
-                        )
+                        ) + tagField
                         "TALK" -> listOf(
                             FieldSpec(saidWho, { saidWho = it }, "saidWho", suggestions = saidWhoSuggestions, onSuggestionClick = { saidWho = it }),
                             FieldSpec(title, { title = it }, "Title", suggestions = titleSuggestions, onSuggestionClick = { title = it }),
                             FieldSpec(source, { source = it }, "Channel")
-                        )
+                        ) + tagField
                         "THOUGHTS" -> listOf(
                             FieldSpec(source, { source = it }, "Where?", maxLines = 3)
-                        )
+                        ) + tagField
                         else -> emptyList()
                     }
 
@@ -289,8 +326,8 @@ fun NoteDialog(
                     // Tag chips
                     Spacer(modifier = Modifier.height(8.dp))
                     FlowRow(
-                        mainAxisSpacing = 8.dp,
-                        crossAxisSpacing = 8.dp,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(start = 72.dp)
@@ -316,24 +353,35 @@ fun NoteDialog(
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = {
+                            val newNote = initialNote.copy(
+                                text = text,
+                                saidWho = saidWho.ifBlank { null },
+                                title = title.ifBlank { null },
+                                url = url.ifBlank { null },
+                                page = page.ifBlank { null },
+                                source = source.ifBlank { null },
+                                tags = confirmedTags.takeIf { it.isNotEmpty() }
+                            )
+                            onSave(newNote)
+                            onDismiss()
                             // Validation logic
-                            val isSourceTitleMandatory = page.isNotBlank() || source.isNotBlank()
-                            if (isSourceTitleMandatory && title.isBlank()) {
-                                showTitleMissingError = true
-                            } else {
-                                showTitleMissingError = false
-                                val newNote = initialNote.copy(
-                                    text = text,
-                                    saidWho = saidWho.ifBlank { null },
-                                    title = title.ifBlank { null },
-                                    url = url.ifBlank { null },
-                                    page = page.ifBlank { null },
-                                    source = source.ifBlank { null },
-                                    tags = confirmedTags.takeIf { it.isNotEmpty() }
-                                )
-                                onSave(newNote)
-                                onDismiss()
-                            }
+//                            val isSourceTitleMandatory = page.isNotBlank() || source.isNotBlank()
+//                            if (isSourceTitleMandatory && title.isBlank()) {
+//                                showTitleMissingError = true
+//                            } else {
+//                                showTitleMissingError = false
+//                                val newNote = initialNote.copy(
+//                                    text = text,
+//                                    saidWho = saidWho.ifBlank { null },
+//                                    title = title.ifBlank { null },
+//                                    url = url.ifBlank { null },
+//                                    page = page.ifBlank { null },
+//                                    source = source.ifBlank { null },
+//                                    tags = confirmedTags.takeIf { it.isNotEmpty() }
+//                                )
+//                                onSave(newNote)
+//                                onDismiss()
+//                            }
                         },
                         enabled = text.isNotBlank()
                     ) { Text("Save") }
