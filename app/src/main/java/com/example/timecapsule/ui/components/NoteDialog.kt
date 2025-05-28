@@ -110,53 +110,6 @@ fun NoteDialog(
         allTags.filter { it.startsWith(tagInput, ignoreCase = true) && !confirmedTags.contains(it) }.take(10)
     } else emptyList()
 
-//    val fields = listOf(
-//        FieldSpec(saidWho, { saidWho = it }, "saidWho", suggestions = saidWhoSuggestions, onSuggestionClick = { saidWho = it }),
-//        FieldSpec(
-//            title,
-//            { title = it },
-//            "Title",
-//            modifier = Modifier.focusRequester(titleFocusRequester),
-//            suggestions = titleSuggestions,
-//            onSuggestionClick = { title = it }),
-//        FieldSpec(page, { page = it.filter { it.isDigit() } }, "Page", keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)),
-//        FieldSpec(source, { source = it }, "Publisher", suggestions = sourceSuggestions, onSuggestionClick = { source = it }),
-//        FieldSpec(url, { url = it }, "URL", keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)),
-//        FieldSpec(
-//            tagInput,
-//            { input ->
-//                // Handle ',' character to add tag
-//                if (input.endsWith(",")) {
-//                    val trimmed = input.trimEnd(',')
-//                    if (trimmed.isNotEmpty() && !confirmedTags.contains(trimmed)) {
-//                        confirmedTags = confirmedTags + trimmed
-//                    }
-//                    tagInput = ""
-//                } else {
-//                    tagInput = input
-//                }
-//            },
-//            "Tag",
-//            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-//            keyboardActions = KeyboardActions(
-//                onDone = {
-//                    val trimmed = tagInput.trim()
-//                    if (trimmed.isNotEmpty() && !confirmedTags.contains(trimmed)) {
-//                        confirmedTags = confirmedTags + trimmed
-//                    }
-//                    tagInput = ""
-//                }
-//            ),
-//            suggestions = tagSuggestions,
-//            onSuggestionClick = { suggestion ->
-//                if (!confirmedTags.contains(suggestion)) {
-//                    confirmedTags = confirmedTags + suggestion
-//                }
-//                tagInput = ""
-//            }
-//        ),
-//        )
-
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(16.dp),
@@ -177,7 +130,7 @@ fun NoteDialog(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     // Random quote placeholder for the text field
-                    val randomPlaceholder = remember { TextfieldPlaceholders.quotes[Random.nextInt(TextfieldPlaceholders.quotes.size)] }
+                    val randomPlaceholder = remember { TextFieldPlaceholders.quotes[Random.nextInt(TextFieldPlaceholders.quotes.size)] }
 
                     OutlinedTextField(
                         value = text,
@@ -224,12 +177,12 @@ fun NoteDialog(
                                     width = if (isSelected) 2.dp else 1.dp,
                                     color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                                 ),
-                                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 6.dp, vertical = 4.dp) // Reduce padding
+                                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 6.dp, vertical = 4.dp)
                             ) { 
                                 Text(
                                     text = cat,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                    fontSize = MaterialTheme.typography.bodySmall.fontSize // Use smaller font size
+                                    fontSize = MaterialTheme.typography.bodySmall.fontSize
                                 )
                             }
                         }

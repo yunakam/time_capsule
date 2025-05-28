@@ -58,8 +58,7 @@ fun OptionalTextField(
     suggestions: List<String> = emptyList(),
     onSuggestionClick: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier
-        .fillMaxWidth()
-        .padding(start = 24.dp),
+        .fillMaxWidth(),
     maxLines: Int = 1,
     ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -79,7 +78,7 @@ fun OptionalTextField(
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(start = 24.dp)
+        modifier = Modifier.padding(start = 12.dp)
     ) {
         if (label == "saidWho") {
             Box(
