@@ -34,8 +34,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.example.compose.ThemeType
 
-enum class TopPageSetting {
+enum class OnLaunch {
     ADD_NOTE_DIALOG,
     LOWEST_SCORE_NOTE,
     RANDOM_NOTE,
@@ -83,10 +84,12 @@ fun <T> SettingItemChoice(
     modifier: Modifier = Modifier
 ) {
     var showChoiceDialog by remember { mutableStateOf(false) }
+    var pendingChoice by remember { mutableStateOf(currentChoice) }
 
     // Show the choice dialog when needed
     if (showChoiceDialog) {
         AlertDialog(
+            containerColor = MaterialTheme.colorScheme.surface,
             onDismissRequest = { showChoiceDialog = false },
             title = { Text(dialogTitle) },
             text = {
@@ -96,11 +99,10 @@ fun <T> SettingItemChoice(
                             headlineContent = { Text(choice.title) },
                             leadingContent = {
                                 RadioButton(
-                                    selected = choice.value == currentChoice,
+                                    selected = choice.value == pendingChoice,
                                     onClick = {
                                         @Suppress("UNCHECKED_CAST")
-                                        onChoiceChange(choice.value as T)
-                                        showChoiceDialog = false
+                                        pendingChoice = choice.value as T
                                     }
                                 )
                             }
@@ -109,8 +111,19 @@ fun <T> SettingItemChoice(
                 }
             },
             confirmButton = {
-                Button(onClick = { showChoiceDialog = false }) {
-                    Text("Cancel")
+                Row {
+                    Button(onClick = { showChoiceDialog = false }) {
+                        Text("Cancel")
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    Button(onClick = {
+                        showChoiceDialog = false
+                        if (pendingChoice != currentChoice) {
+                            onChoiceChange(pendingChoice)
+                        }
+                    }) {
+                        Text("Confirm")
+                    }
                 }
             }
         )
@@ -120,7 +133,10 @@ fun <T> SettingItemChoice(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable { showChoiceDialog = true }
+            .clickable {
+                pendingChoice = currentChoice
+                showChoiceDialog = true
+            }
             .padding(horizontal = 24.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -145,7 +161,7 @@ fun <T> SettingItemChoice(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = Int.MAX_VALUE,
                 softWrap = true
-                )
+            )
         }
         Spacer(Modifier.width(8.dp))
         Box(
@@ -158,17 +174,19 @@ fun <T> SettingItemChoice(
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-
     }
 }
 
 @Composable
 fun SettingsDialog(
     onDismiss: () -> Unit,
-    topPageSetting: TopPageSetting = TopPageSetting.ADD_NOTE_DIALOG,
-    onTopPageSettingChange: (TopPageSetting) -> Unit = {}
+    onLaunch: OnLaunch = OnLaunch.ADD_NOTE_DIALOG,
+    onLaunchChange: (OnLaunch) -> Unit = {},
+    themeType: ThemeType = ThemeType.Default,
+    onThemeTypeChange: (ThemeType) -> Unit = {},
 ) {
-    var selected by remember { mutableStateOf(topPageSetting) }
+    var selectedOnLaunch by remember { mutableStateOf(onLaunch) }
+    var selectedTheme by remember { mutableStateOf(themeType) }
     // Example toggle state
     var notificationsEnabled by remember { mutableStateOf(true) }
 
@@ -196,21 +214,36 @@ fun SettingsDialog(
                         .verticalScroll(rememberScrollState())
                 ) {
                     SettingItemChoice(
-                        title = "Dialog upon launch",
+                        title = "Upon launch",
                         choices = listOf(
-                            Choice("New note", TopPageSetting.ADD_NOTE_DIALOG),
-                            Choice("Note buried deep in the ground", TopPageSetting.LOWEST_SCORE_NOTE),
-                            Choice("Random note", TopPageSetting.RANDOM_NOTE),
-                            Choice("None", TopPageSetting.NOTE_LIST)
+                            Choice("New note", OnLaunch.ADD_NOTE_DIALOG),
+                            Choice("Note buried deep in the ground", OnLaunch.LOWEST_SCORE_NOTE),
+                            Choice("Random note", OnLaunch.RANDOM_NOTE),
+                            Choice("None", OnLaunch.NOTE_LIST)
                         ),
-                        currentChoice = selected,
+                        currentChoice = selectedOnLaunch,
                         onChoiceChange = { newSetting ->
-                            selected = newSetting
-                            onTopPageSettingChange(newSetting)
+                            selectedOnLaunch = newSetting
+                            onLaunchChange(newSetting)
                         }
                     )
                     Spacer(Modifier.height(16.dp))
-                    // Example of using SettingItemToggle
+                    SettingItemChoice(
+                        title = "Theme",
+                        choices = listOf(
+                            Choice("Default", ThemeType.Default),
+                            Choice("Blue", ThemeType.Blue),
+                            Choice("Red", ThemeType.Red),
+                            Choice("Green", ThemeType.Green),
+                            Choice("Purple", ThemeType.Purple),
+                        ),
+                        currentChoice = selectedTheme,
+                        onChoiceChange = { newTheme ->
+                            selectedTheme = newTheme
+                            onThemeTypeChange(newTheme)
+                        }
+                    )
+                    Spacer(Modifier.height(16.dp))
                     SettingItemToggle(
                         title = "Enable notifications",
                         checked = notificationsEnabled,
@@ -218,13 +251,6 @@ fun SettingsDialog(
                     )
                     Spacer(Modifier.height(16.dp))
                 }
-//                Spacer(Modifier.height(24.dp))
-//                Button(
-//                    onClick = onDismiss,
-//                    modifier = Modifier.padding(horizontal = 24.dp)
-//                ) {
-//                    Text("Close")
-//                }
             }
         }
     }

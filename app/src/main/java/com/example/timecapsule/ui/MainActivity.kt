@@ -42,8 +42,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.dp
 import com.example.compose.AppTheme
+import com.example.compose.ThemeType
 import com.example.timecapsule.data.AppDatabase
 import com.example.timecapsule.data.FilterType
 import com.example.timecapsule.data.Note
@@ -54,8 +56,8 @@ import com.example.timecapsule.ui.components.DeleteNoteDialog
 import com.example.timecapsule.ui.components.NoteCard
 import com.example.timecapsule.ui.components.NoteDialog
 import com.example.timecapsule.ui.components.NoteViewDialog
+import com.example.timecapsule.ui.components.OnLaunch
 import com.example.timecapsule.ui.components.SettingsDialog
-import com.example.timecapsule.ui.components.TopPageSetting
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -70,7 +72,8 @@ class MainActivity : ComponentActivity() {
         val preferencesManager = PreferencesManager(this)
 
         setContent {
-            AppTheme(dynamicColor = false) {
+            val themeType by preferencesManager.themeTypeFlow.collectAsState(initial = ThemeType.Default)
+            AppTheme(dynamicColor = false, themeType = themeType) {
                 var showFilteredNotesScreen by remember { mutableStateOf(false) }
                 var currentFilterType by remember { mutableStateOf<FilterType?>(null) }
                 var currentFilterValue by remember { mutableStateOf<String?>(null) }
@@ -135,8 +138,8 @@ class MainActivity : ComponentActivity() {
                     LaunchedEffect(topPageSetting, notes) {
                         if (!didShowStartupDialog) {
                             when (topPageSetting) {
-                                TopPageSetting.ADD_NOTE_DIALOG -> showAddDialog = true
-                                TopPageSetting.RANDOM_NOTE -> {
+                                OnLaunch.ADD_NOTE_DIALOG -> showAddDialog = true
+                                OnLaunch.RANDOM_NOTE -> {
                                     if (notes.isNotEmpty()) {
                                         val randomNote = notes[Random.nextInt(notes.size)]
                                         withContext(Dispatchers.IO) {
@@ -150,7 +153,7 @@ class MainActivity : ComponentActivity() {
                                         showViewDialogId = randomNote.id
                                     }
                                 }
-                                TopPageSetting.LOWEST_SCORE_NOTE -> {
+                                OnLaunch.LOWEST_SCORE_NOTE -> {
                                     if (notes.isNotEmpty()) {
                                         val minScore = notes.minOf { it.score }
                                         val lowestScoreNotes = notes.filter { it.score == minScore }
@@ -166,7 +169,7 @@ class MainActivity : ComponentActivity() {
                                         showViewDialogId = noteToShow.id
                                     }
                                 }
-                                TopPageSetting.NOTE_LIST -> { /* Do nothing */ }
+                                OnLaunch.NOTE_LIST -> { /* Do nothing */ }
                                 null -> { /* Should not happen here */ }
                             }
                             didShowStartupDialog = true
@@ -176,10 +179,10 @@ class MainActivity : ComponentActivity() {
                     // Color logic
                     val sortedNotes = notes.sortedByDescending { it.createdAt }
                     val colorBuckets = listOf(
-                        MaterialTheme.colorScheme.surfaceContainerLow,
-                        MaterialTheme.colorScheme.surfaceContainer,
-                        MaterialTheme.colorScheme.surfaceContainerHigh,
-                        MaterialTheme.colorScheme.surfaceContainerHighest
+                        lerp(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.primary, 0.1f),
+                        lerp(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.primary, 0.2f),
+                        lerp(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.primary, 0.3f),
+                        lerp(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.primary, 0.4f),
                     )
                     val colorForNote: (Note) -> Color = { note ->
                         val visitedNotes = notes.filter { it.lastVisitedAt != null }
@@ -376,10 +379,10 @@ class MainActivity : ComponentActivity() {
                                 showDeleteDialogId = note.id
                             },
                             onDismiss = { showViewDialogId = null },
-                            onFilterByAuthor = { saidWho ->
+                            onFilterByAuthor = { author ->
                                 showViewDialogId = null
                                 currentFilterType = FilterType.AUTHOR
-                                currentFilterValue = saidWho
+                                currentFilterValue = author
                                 showFilteredNotesScreen = true
                             },
                             onFilterByTitle = { title ->
@@ -441,10 +444,16 @@ class MainActivity : ComponentActivity() {
                     if (showSettingsDialog) {
                         SettingsDialog(
                             onDismiss = { showSettingsDialog = false },
-                            topPageSetting = topPageSetting!!,
-                            onTopPageSettingChange = { newSetting ->
+                            onLaunch = topPageSetting!!,
+                            onLaunchChange = { newSetting ->
                                 scope.launch {
                                     preferencesManager.setTopPageSetting(newSetting)
+                                }
+                            },
+                            themeType = themeType,
+                            onThemeTypeChange = { newTheme ->
+                                scope.launch {
+                                    preferencesManager.setThemeType(newTheme)
                                 }
                             }
                         )

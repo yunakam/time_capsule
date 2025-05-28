@@ -1,19 +1,15 @@
 package com.example.compose
 
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import com.example.ui.theme.AppTypography
 
-private val lightScheme = lightColorScheme(
+private val defaultLightScheme = lightColorScheme(
     primary = primaryLight,
     onPrimary = onPrimaryLight,
     primaryContainer = primaryContainerLight,
@@ -51,7 +47,7 @@ private val lightScheme = lightColorScheme(
     surfaceContainerHighest = surfaceContainerHighestLight,
 )
 
-private val darkScheme = darkColorScheme(
+private val defaultDarkScheme = darkColorScheme(
     primary = primaryDark,
     onPrimary = onPrimaryDark,
     primaryContainer = primaryContainerDark,
@@ -241,6 +237,126 @@ private val highContrastDarkColorScheme = darkColorScheme(
     surfaceContainerHighest = surfaceContainerHighestDarkHighContrast,
 )
 
+// Blue Theme
+private val lightBlueScheme = lightColorScheme(
+    primary = primaryBlueLight,
+    onPrimary = onPrimaryBlueLight,
+    primaryContainer = primaryContainerBlueLight,
+    onPrimaryContainer = onPrimaryContainerBlueLight,
+    secondary = secondaryBlueLight,
+    onSecondary = onSecondaryBlueLight,
+    secondaryContainer = secondaryContainerBlueLight,
+    onSecondaryContainer = onSecondaryContainerBlueLight,
+    background = backgroundBlueLight,
+    onBackground = onBackgroundBlueLight,
+    surface = surfaceBlueLight,
+    onSurface = onSurfaceBlueLight,
+)
+private val darkBlueScheme = darkColorScheme(
+    primary = primaryBlueDark,
+    onPrimary = onPrimaryBlueDark,
+    primaryContainer = primaryContainerBlueDark,
+    onPrimaryContainer = onPrimaryContainerBlueDark,
+    secondary = secondaryBlueDark,
+    onSecondary = onSecondaryBlueDark,
+    secondaryContainer = secondaryContainerBlueDark,
+    onSecondaryContainer = onSecondaryContainerBlueDark,
+    background = backgroundBlueDark,
+    onBackground = onBackgroundBlueDark,
+    surface = surfaceBlueDark,
+    onSurface = onSurfaceBlueDark,
+)
+
+// Red Theme
+private val lightRedScheme = lightColorScheme(
+    primary = primaryRedLight,
+    onPrimary = onPrimaryRedLight,
+    primaryContainer = primaryContainerRedLight,
+    onPrimaryContainer = onPrimaryContainerRedLight,
+    secondary = secondaryRedLight,
+    onSecondary = onSecondaryRedLight,
+    secondaryContainer = secondaryContainerRedLight,
+    onSecondaryContainer = onSecondaryContainerRedLight,
+    background = backgroundRedLight,
+    onBackground = onBackgroundRedLight,
+    surface = surfaceRedLight,
+    onSurface = onSurfaceRedLight,
+)
+private val darkRedScheme = darkColorScheme(
+    primary = primaryRedDark,
+    onPrimary = onPrimaryRedDark,
+    primaryContainer = primaryContainerRedDark,
+    onPrimaryContainer = onPrimaryContainerRedDark,
+    secondary = secondaryRedDark,
+    onSecondary = onSecondaryRedDark,
+    secondaryContainer = secondaryContainerRedDark,
+    onSecondaryContainer = onSecondaryContainerRedDark,
+    background = backgroundRedDark,
+    onBackground = onBackgroundRedDark,
+    surface = surfaceRedDark,
+    onSurface = onSurfaceRedDark,
+)
+
+// Green Theme
+private val lightGreenScheme = lightColorScheme(
+    primary = primaryGreenLight,
+    onPrimary = onPrimaryGreenLight,
+    primaryContainer = primaryContainerGreenLight,
+    onPrimaryContainer = onPrimaryContainerGreenLight,
+    secondary = secondaryGreenLight,
+    onSecondary = onSecondaryGreenLight,
+    secondaryContainer = secondaryContainerGreenLight,
+    onSecondaryContainer = onSecondaryContainerGreenLight,
+    background = backgroundGreenLight,
+    onBackground = onBackgroundGreenLight,
+    surface = surfaceGreenLight,
+    onSurface = onSurfaceGreenLight,
+)
+private val darkGreenScheme = darkColorScheme(
+    primary = primaryGreenDark,
+    onPrimary = onPrimaryGreenDark,
+    primaryContainer = primaryContainerGreenDark,
+    onPrimaryContainer = onPrimaryContainerGreenDark,
+    secondary = secondaryGreenDark,
+    onSecondary = onSecondaryGreenDark,
+    secondaryContainer = secondaryContainerGreenDark,
+    onSecondaryContainer = onSecondaryContainerGreenDark,
+    background = backgroundGreenDark,
+    onBackground = onBackgroundGreenDark,
+    surface = surfaceGreenDark,
+    onSurface = onSurfaceGreenDark,
+)
+
+// Purple Theme
+private val lightPurpleScheme = lightColorScheme(
+    primary = primaryPurpleLight,
+    onPrimary = onPrimaryPurpleLight,
+    primaryContainer = primaryContainerPurpleLight,
+    onPrimaryContainer = onPrimaryContainerPurpleLight,
+    secondary = secondaryPurpleLight,
+    onSecondary = onSecondaryPurpleLight,
+    secondaryContainer = secondaryContainerPurpleLight,
+    onSecondaryContainer = onSecondaryContainerPurpleLight,
+    background = backgroundPurpleLight,
+    onBackground = onBackgroundPurpleLight,
+    surface = surfacePurpleLight,
+    onSurface = onSurfacePurpleLight,
+)
+private val darkPurpleScheme = darkColorScheme(
+    primary = primaryPurpleDark,
+    onPrimary = onPrimaryPurpleDark,
+    primaryContainer = primaryContainerPurpleDark,
+    onPrimaryContainer = onPrimaryContainerPurpleDark,
+    secondary = secondaryPurpleDark,
+    onSecondary = onSecondaryPurpleDark,
+    secondaryContainer = secondaryContainerPurpleDark,
+    onSecondaryContainer = onSecondaryContainerPurpleDark,
+    background = backgroundPurpleDark,
+    onBackground = onBackgroundPurpleDark,
+    surface = surfacePurpleDark,
+    onSurface = onSurfacePurpleDark,
+)
+
 @Immutable
 data class ColorFamily(
     val color: Color,
@@ -253,27 +369,30 @@ val unspecified_scheme = ColorFamily(
     Color.Unspecified, Color.Unspecified, Color.Unspecified, Color.Unspecified
 )
 
+enum class ThemeType {
+    Default, Blue, Red, Green, Purple
+}
+
 @Composable
 fun AppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
-    content: @Composable() () -> Unit
+    themeType: ThemeType = ThemeType.Default,
+    content: @Composable () -> Unit
 ) {
-  val colorScheme = when {
-      dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-          val context = LocalContext.current
-          if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-      }
-      
-      darkTheme -> darkScheme
-      else -> lightScheme
-  }
+    val colorScheme = when (themeType) {
+        ThemeType.Default -> if (darkTheme) defaultDarkScheme else defaultLightScheme
+        ThemeType.Blue -> if (darkTheme) darkBlueScheme else lightBlueScheme
+        ThemeType.Red -> if (darkTheme) darkRedScheme else lightRedScheme
+        ThemeType.Green -> if (darkTheme) darkGreenScheme else lightGreenScheme
+        ThemeType.Purple -> if (darkTheme) darkPurpleScheme else lightPurpleScheme
+    }
 
-  MaterialTheme(
-    colorScheme = colorScheme,
-    typography = AppTypography,
-    content = content
-  )
+    MaterialTheme(
+        colorScheme = colorScheme,
+        typography = AppTypography,
+        content = content
+    )
 }
 
