@@ -181,7 +181,7 @@ fun NoteViewDialog(
                            Box(
                                modifier = Modifier
                                    .fillMaxWidth()
-                                   .heightIn(max = 300.dp)
+                                   .heightIn(max = 320.dp)
                                    .verticalScroll(rememberScrollState())
                            ) {
                                SelectionContainer {
@@ -209,34 +209,6 @@ fun NoteViewDialog(
                                }
 
                                Spacer(Modifier.height(6.dp))
-
-//                               note.title?.takeIf { it.isNotBlank() }?.let { title ->
-//                                   val details = listOfNotNull(
-//                                       note.page?.takeIf { it.isNotBlank() }?.let { "page $it" },
-//                                       note.source?.takeIf { it.isNotBlank() }
-//                                   ).takeIf { it.isNotEmpty() }
-//                                       ?.joinToString(", ", prefix = " (", postfix = ")") ?: ""
-//                                   val fullString = buildString {
-//                                       append('"')
-//                                       append(title)
-//                                       append('"')
-//                                       if (details.isNotBlank()) append(details)
-//                                   }
-//                                   metaText(
-//                                       text = fullString,
-//                                       modifier = Modifier.clickable { onFilterByTitle(title) }
-//                                   )
-//                               } ?: run {
-//                                   // If no title, just show page/source if available
-//                                   val details = listOfNotNull(
-//                                       note.page?.takeIf { it.isNotBlank() }?.let { "page $it" },
-//                                       note.source?.takeIf { it.isNotBlank() }
-//                                   )
-//                                       .joinToString(", ")
-//                                   if (details.isNotBlank()) {
-//                                       metaText(details)
-//                                   }
-//                               }
 
                                val details = listOfNotNull(
                                    note.page?.takeIf { it.isNotBlank() }?.let { "page $it" },

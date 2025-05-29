@@ -132,6 +132,7 @@ fun NoteDialog(
                     // Random quote placeholder for the text field
                     val randomPlaceholder = remember { TextFieldPlaceholders.quotes[Random.nextInt(TextFieldPlaceholders.quotes.size)] }
 
+                    // Main text input field
                     OutlinedTextField(
                         value = text,
                         onValueChange = { text = it },
@@ -148,7 +149,7 @@ fun NoteDialog(
                             .fillMaxHeight()
                             .heightIn(min = 180.dp),
                         singleLine = false,
-                        maxLines = 10,
+                        maxLines = 15,
                     )
 
                     Spacer(Modifier.height(12.dp))

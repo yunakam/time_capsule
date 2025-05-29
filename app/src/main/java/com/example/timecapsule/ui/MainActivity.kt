@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -23,6 +25,8 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -58,6 +62,7 @@ import com.example.timecapsule.ui.components.NoteDialog
 import com.example.timecapsule.ui.components.NoteViewDialog
 import com.example.timecapsule.ui.components.OnLaunch
 import com.example.timecapsule.ui.components.SettingsDialog
+import com.example.timecapsule.ui.components.SortType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -87,6 +92,10 @@ class MainActivity : ComponentActivity() {
                 var searchQuery by remember { mutableStateOf("") }
 
                 var showSettingsDialog by remember { mutableStateOf(false) }
+
+                // Sort type state
+                var sortType by remember { mutableStateOf(SortType.MostForgotten) }
+                var showSortMenu by remember { mutableStateOf(false) }
 
                 val scope = rememberCoroutineScope()
                 val notesFlow = remember { db.noteDao().getAllFlow() }
@@ -231,12 +240,50 @@ class MainActivity : ComponentActivity() {
                                     ) {
                                         FloatingActionButton(
                                             onClick = { showSettingsDialog = true },
-                                            modifier = Modifier.padding(end = 12.dp, bottom = 16.dp)
+                                            modifier = Modifier
+                                                .padding(end = 12.dp, bottom = 16.dp)
                                                 .size(48.dp)
                                         ) {
                                             Icon(Icons.Default.Settings, contentDescription = "Settings")
                                         }
                                         Row {
+                                            // Sort menu button
+                                            Box {
+                                                FloatingActionButton(
+                                                    onClick = { showSortMenu = true },
+                                                    modifier = Modifier
+                                                        .padding(end = 8.dp, top = 12.dp)
+                                                        .width(200.dp)
+                                                        .size(48.dp),
+                                                    shape = CircleShape,
+                                                ) {
+                                                    Text(
+                                                        text = sortType.label,
+                                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                                        style = MaterialTheme.typography.labelLarge
+                                                    )
+                                                }
+                                                DropdownMenu(
+                                                    expanded = showSortMenu,
+                                                    onDismissRequest = { showSortMenu = false },
+                                                    modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer)
+                                                ) {
+                                                    SortType.menuOptions.forEach { option ->
+                                                        DropdownMenuItem(
+                                                            text = { 
+                                                                Text(
+                                                                    option.menuText,
+                                                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                                                ) 
+                                                            },
+                                                            onClick = {
+                                                                sortType = option
+                                                                showSortMenu = false
+                                                            }
+                                                        )
+                                                    }
+                                                }
+                                            }
                                             FloatingActionButton(
                                                 onClick = { isSearchActive = true },
                                                 modifier = Modifier
@@ -302,6 +349,14 @@ class MainActivity : ComponentActivity() {
                                     .padding(padding)
                                     .fillMaxSize()
                             ) {
+                                val sortedNotes = when (sortType) {
+                                    SortType.MostForgotten -> notes.sortedBy { it.score }
+                                    SortType.LeastForgotten -> notes.sortedByDescending { it.score }
+                                    SortType.LeastRecentlyDug -> notes.sortedByDescending { it.lastVisitedAt?.time ?: Long.MIN_VALUE }
+                                    SortType.MostRecentlyDug -> notes.sortedBy { it.lastVisitedAt?.time ?: Long.MAX_VALUE }
+                                    SortType.LeastDug -> notes.sortedBy { note: Note -> note.visitTimestamps?.size ?: 0 }
+                                    SortType.MostDug -> notes.sortedByDescending { it.visitTimestamps?.size ?: 0 }
+                                }
                                 val filteredNotes = if (searchQuery.isBlank()) {
                                     sortedNotes
                                 } else {
@@ -463,3 +518,4 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
