@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -94,7 +95,7 @@ class MainActivity : ComponentActivity() {
                 var showSettingsDialog by remember { mutableStateOf(false) }
 
                 // Sort type state
-                var sortType by remember { mutableStateOf(SortType.MostForgotten) }
+                var sortType by remember { mutableStateOf(SortType.Newest) }
                 var showSortMenu by remember { mutableStateOf(false) }
 
                 val scope = rememberCoroutineScope()
@@ -194,18 +195,12 @@ class MainActivity : ComponentActivity() {
                         lerp(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.primary, 0.4f),
                     )
                     val colorForNote: (Note) -> Color = { note ->
-                        val visitedNotes = notes.filter { it.lastVisitedAt != null }
-                            .sortedByDescending { it.lastVisitedAt }
-                        val visitedCount = visitedNotes.size
-                        val bucketSize = (visitedCount / colorBuckets.size.toFloat()).coerceAtLeast(1f)
-                        if (note.lastVisitedAt == null) {
-                            colorBuckets[0]
-                        } else {
-                            val recencyIndex = visitedNotes.indexOfFirst { it.id == note.id }
-                            if (recencyIndex == -1) colorBuckets.last() else {
-                                val bucket = (recencyIndex / bucketSize).toInt().coerceIn(0, colorBuckets.lastIndex)
-                                colorBuckets[bucket]
-                            }
+                        val sortedByScore = notes.sortedBy { it.score }
+                        val bucketSize = (notes.size / colorBuckets.size.toFloat()).coerceAtLeast(1f)
+                        val scoreIndex = sortedByScore.indexOfFirst { it.id == note.id }
+                        if (scoreIndex == -1) colorBuckets.last() else {
+                            val bucket = ((colorBuckets.size - 1) - (scoreIndex / bucketSize).toInt()).coerceIn(0, colorBuckets.lastIndex)
+                            colorBuckets[bucket]
                         }
                     }
 
@@ -236,24 +231,32 @@ class MainActivity : ComponentActivity() {
                                 if (!isSearchActive) {
                                     Column(
                                         horizontalAlignment = Alignment.End,
-                                        modifier = Modifier.padding(end = 16.dp, bottom = 36.dp)
+                                        modifier = Modifier.padding(end = 16.dp, bottom = 24.dp)
                                     ) {
                                         FloatingActionButton(
                                             onClick = { showSettingsDialog = true },
+                                            containerColor = MaterialTheme.colorScheme.primary,
                                             modifier = Modifier
                                                 .padding(end = 12.dp, bottom = 16.dp)
                                                 .size(48.dp)
                                         ) {
-                                            Icon(Icons.Default.Settings, contentDescription = "Settings")
+                                            Icon(
+                                                imageVector = Icons.Default.Settings,
+                                                contentDescription = "Settings",
+                                                tint = MaterialTheme.colorScheme.onPrimary
+                                            )
                                         }
-                                        Row {
-                                            // Sort menu button
-                                            Box {
+                                        Row(
+                                            verticalAlignment = Alignment.Bottom
+                                        ) {
+                                            Box(
+                                                contentAlignment = Alignment.CenterEnd,
+                                            ) {
                                                 FloatingActionButton(
                                                     onClick = { showSortMenu = true },
                                                     modifier = Modifier
-                                                        .padding(end = 8.dp, top = 12.dp)
-                                                        .width(200.dp)
+                                                        .padding(end = 16.dp, bottom = 12.dp)
+                                                        .width(180.dp)
                                                         .size(48.dp),
                                                     shape = CircleShape,
                                                 ) {
@@ -266,7 +269,9 @@ class MainActivity : ComponentActivity() {
                                                 DropdownMenu(
                                                     expanded = showSortMenu,
                                                     onDismissRequest = { showSortMenu = false },
-                                                    modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer)
+                                                    modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer),
+                                                    offset = androidx.compose.ui.unit.DpOffset(x = 40.dp, y = (-8).dp),
+                                                    shape = RoundedCornerShape(12.dp)
                                                 ) {
                                                     SortType.menuOptions.forEach { option ->
                                                         DropdownMenuItem(
@@ -287,7 +292,7 @@ class MainActivity : ComponentActivity() {
                                             FloatingActionButton(
                                                 onClick = { isSearchActive = true },
                                                 modifier = Modifier
-                                                    .padding(end = 16.dp, top = 12.dp)
+                                                    .padding(end = 16.dp, bottom = 12.dp)
                                                     .size(48.dp)
                                             ) {
                                                 Icon(Icons.Default.Search, contentDescription = "Search")
@@ -349,7 +354,15 @@ class MainActivity : ComponentActivity() {
                                     .padding(padding)
                                     .fillMaxSize()
                             ) {
+
+                                // Remember the grid state to scroll to top when sort type changes
+                                val gridState = rememberLazyGridState()
+                                LaunchedEffect(sortType) {
+                                    gridState.scrollToItem(0)
+                                }
                                 val sortedNotes = when (sortType) {
+                                    SortType.Newest -> notes.sortedByDescending { it.createdAt }
+                                    SortType.Oldest -> notes.sortedBy { it.createdAt }
                                     SortType.MostForgotten -> notes.sortedBy { it.score }
                                     SortType.LeastForgotten -> notes.sortedByDescending { it.score }
                                     SortType.LeastRecentlyDug -> notes.sortedByDescending { it.lastVisitedAt?.time ?: Long.MIN_VALUE }
@@ -369,6 +382,7 @@ class MainActivity : ComponentActivity() {
                                 }
                                 LazyVerticalGrid(
                                     columns = GridCells.Adaptive(minSize = 140.dp),
+                                    state = gridState,
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(16.dp),
