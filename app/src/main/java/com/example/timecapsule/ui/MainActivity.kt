@@ -134,7 +134,7 @@ class MainActivity : ComponentActivity() {
                 val topPageSetting by preferencesManager.topPageSettingFlow.collectAsState(initial = null)
 
                 val noteDao = db.noteDao()
-
+                val sourceBindingDao = db.sourceBindingDao()
 
                 // Only proceed when preferences are loaded
                 if (topPageSetting == null) {
@@ -431,6 +431,7 @@ class MainActivity : ComponentActivity() {
                             },
                             onDismiss = { showAddDialog = false },
                             noteDao = noteDao,
+                            sourceBindingDao = sourceBindingDao,
                         )
                     }
 
@@ -487,7 +488,8 @@ class MainActivity : ComponentActivity() {
                                 showEditDialogId = null
                                 showViewDialogId = note.id
                             },
-                            noteDao = noteDao
+                            noteDao = noteDao,
+                            sourceBindingDao = sourceBindingDao,
                         )
                     }
 

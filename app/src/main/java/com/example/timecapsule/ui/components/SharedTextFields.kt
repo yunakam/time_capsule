@@ -24,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -62,10 +63,16 @@ fun OptionalTextField(
         .fillMaxWidth(),
     maxLines: Int = 1,
     singleLine: Boolean = true,
-    ) {
+    onFocusChanged: ((Boolean) -> Unit)? = null,
+) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
     val (suggestionSelected, setSuggestionSelected) = remember { mutableStateOf(false) }
+
+    // Call onFocusChanged when focus changes
+    LaunchedEffect(isFocused) {
+        onFocusChanged?.invoke(isFocused)
+    }
 
     // Only apply border when focused
     val borderModifier = if (isFocused) {
@@ -80,28 +87,23 @@ fun OptionalTextField(
     }
 
     Row(
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.Top,
         modifier = Modifier.padding(start = 12.dp)
     ) {
-        if (label == "saidWho") {
-            Box(
-                modifier = Modifier
-                    .width(54.dp),
-                contentAlignment = Alignment.CenterEnd
-            ) {
+        Box(
+            modifier = Modifier
+                .width(54.dp)
+                .padding(top = 18.dp, end = 8.dp),
+            contentAlignment = Alignment.CenterEnd
+        ) {
+            if (label == "saidWho") {
                 Icon(
                     imageVector = Icons.Default.Person,
                     contentDescription = "Person",
                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                     modifier = Modifier.size(20.dp)
                 )
-            }
-        } else {
-            Box(
-                modifier = Modifier
-                    .width(54.dp),
-                contentAlignment = Alignment.CenterEnd
-            ) {
+            } else {
                 Text(
                     text = label,
                     style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
@@ -142,7 +144,6 @@ fun OptionalTextField(
             // Suggestion list shows up as Column
             if (
                 onSuggestionClick != null &&
-                value.isNotBlank() &&
                 suggestions.isNotEmpty() &&
                 isFocused &&
                 !suggestionSelected
@@ -171,6 +172,5 @@ fun OptionalTextField(
                 }
             }
         }
-
     }
 }

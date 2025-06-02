@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -41,18 +42,20 @@ import androidx.compose.ui.window.Dialog
 import com.example.timecapsule.data.Note
 import com.example.timecapsule.data.NoteCategory
 import com.example.timecapsule.data.NoteDao
+import com.example.timecapsule.data.SourceBindingDao
+import kotlinx.coroutines.launch
 import kotlin.random.Random
-
 
 @Composable
 fun NoteDialog(
-//    title: String = "",
     initialNote: Note = Note(),
     onSave: (Note) -> Unit,
     onDismiss: () -> Unit,
     noteDao: NoteDao,
+    sourceBindingDao: SourceBindingDao,
     onCancel: (() -> Unit)? = null,
 ) {
+    val coroutineScope = rememberCoroutineScope()
     var category by remember { mutableStateOf(initialNote.category?.name ?: "BOOK") }
     val categories = NoteCategory.values().map { it.name }
 
@@ -64,6 +67,10 @@ fun NoteDialog(
     var source by remember { mutableStateOf(initialNote.source ?: "") }
     var confirmedTags by remember { mutableStateOf(initialNote.tags ?: emptyList()) }
     var tagInput by remember { mutableStateOf("") }
+
+    // Track which field was last selected from suggestions
+    var lastSelectedField by remember { mutableStateOf<String?>(null) }
+    var lastSelectedValue by remember { mutableStateOf<String?>(null) }
 
     // Error state for validation
     var showTitleMissingError by remember { mutableStateOf(false) }
@@ -82,6 +89,8 @@ fun NoteDialog(
         confirmedTags = initialNote.tags ?: emptyList()
         tagInput = ""
         showTitleMissingError = false
+        lastSelectedField = null
+        lastSelectedValue = null
     }
 
     // Request focus on the Title field when showError becomes true
@@ -91,9 +100,207 @@ fun NoteDialog(
         }
     }
 
-    val saidWhoSuggestions by rememberSuggestions(saidWho) { noteDao.getSaidWhoSuggestions(it) }
-    val titleSuggestions by rememberSuggestions(title) { noteDao.getTitleSuggestions(it) }
-    val sourceSuggestions by rememberSuggestions(source) { noteDao.getSourceSuggestions(it) }
+    // Dynamic suggestions based on last selected field
+    val saidWhoSuggestions by produceState(initialValue = emptyList<String>(), saidWho, lastSelectedField, lastSelectedValue) {
+        value = when {
+            saidWho.isNotBlank() -> // First check if there's direct input
+                noteDao.getSaidWhoSuggestions(saidWho)
+            lastSelectedField == "title" && lastSelectedValue != null -> 
+                sourceBindingDao.getSaidWhosForTitle(lastSelectedValue!!)
+            lastSelectedField == "source" && lastSelectedValue != null ->
+                sourceBindingDao.findByTitle(title)
+                    .map { it.saidWho }
+                    .distinct()
+            else -> emptyList()
+        }
+    }
+
+    val titleSuggestions by produceState(initialValue = emptyList<String>(), title, lastSelectedField, lastSelectedValue) {
+        value = when {
+            title.isNotBlank() -> // First check if there's direct input
+                noteDao.getTitleSuggestions(title)
+            lastSelectedField == "saidWho" && lastSelectedValue != null ->
+                sourceBindingDao.getTitlesForSaidWho(lastSelectedValue!!)
+            lastSelectedField == "source" && lastSelectedValue != null ->
+                sourceBindingDao.findByTitle(title)
+                    .map { it.title }
+                    .distinct()
+            else -> emptyList()
+        }
+    }
+
+    val sourceSuggestions by produceState(initialValue = emptyList<String>(), source, lastSelectedField, lastSelectedValue) {
+        value = when {
+            source.isNotBlank() -> // First check if there's direct input
+                noteDao.getSourceSuggestions(source)
+            lastSelectedField == "saidWho" && lastSelectedValue != null ->
+                sourceBindingDao.findBySaidWho(lastSelectedValue!!)
+                    .mapNotNull { it.source }
+                    .distinct()
+            lastSelectedField == "title" && lastSelectedValue != null ->
+                sourceBindingDao.getSourcesForTitle(lastSelectedValue!!)
+                    .filterNotNull()
+            else -> emptyList()
+        }
+    }
+
+    // --- Pending Suggestions State ---
+    var pendingTitleSuggestions by remember { mutableStateOf<List<String>>(emptyList()) }
+    var pendingSourceSuggestions by remember { mutableStateOf<List<String>>(emptyList()) }
+    var pendingSaidWhoSuggestions by remember { mutableStateOf<List<String>>(emptyList()) }
+    var titleFieldFocused by remember { mutableStateOf(false) }
+    var sourceFieldFocused by remember { mutableStateOf(false) }
+    var saidWhoFieldFocused by remember { mutableStateOf(false) }
+
+    // --- Helper: Filter suggestions by input ---
+    fun filterSuggestions(input: String, suggestions: List<String>): List<String> {
+        return suggestions.filter { it.startsWith(input, ignoreCase = true) }
+    }
+
+    // --- Modified handleSelection logic ---
+    suspend fun handleSelection(field: String, value: String) {
+        lastSelectedField = field
+        lastSelectedValue = value
+
+        when (field) {
+            "saidWho" -> {
+                saidWho = value
+                val notes = noteDao.getNotesByAuthor(value)
+                val uniqueTitles = notes.mapNotNull { it.title }.distinct()
+                val uniqueSources = notes.mapNotNull { it.source }.distinct()
+
+                if (title.isBlank()) {
+                    if (uniqueTitles.size == 1) {
+                        title = uniqueTitles.first()
+                        pendingTitleSuggestions = emptyList()
+                    } else if (uniqueTitles.size > 1) {
+                        pendingTitleSuggestions = uniqueTitles
+                    } else {
+                        pendingTitleSuggestions = emptyList()
+                    }
+                }
+                if (source.isBlank()) {
+                    if (uniqueSources.size == 1) {
+                        source = uniqueSources.first()
+                        pendingSourceSuggestions = emptyList()
+                    } else if (uniqueSources.size > 1) {
+                        pendingSourceSuggestions = uniqueSources
+                    } else {
+                        pendingSourceSuggestions = emptyList()
+                    }
+                }
+            }
+            "title" -> {
+                title = value
+                val notes = noteDao.getNotesByTitle(value)
+                val uniqueSaidWhos = notes.mapNotNull { it.saidWho }.distinct()
+                val uniqueSources = notes.mapNotNull { it.source }.distinct()
+                
+                if (saidWho.isBlank()) {
+                    if (uniqueSaidWhos.size == 1) {
+                        saidWho = uniqueSaidWhos.first()
+                        pendingSaidWhoSuggestions = emptyList()
+                    } else if (uniqueSaidWhos.size > 1) {
+                        pendingSaidWhoSuggestions = uniqueSaidWhos
+                    } else {
+                        pendingSaidWhoSuggestions = emptyList()
+                    }
+                }
+                if (source.isBlank()) {
+                    if (uniqueSources.size == 1) {
+                        source = uniqueSources.first()
+                        pendingSourceSuggestions = emptyList()
+                    } else if (uniqueSources.size > 1) {
+                        pendingSourceSuggestions = uniqueSources
+                    } else {
+                        pendingSourceSuggestions = emptyList()
+                    }
+                }
+            }
+            "source" -> {
+                source = value
+                val notes = noteDao.getNotesByPublisher(value)
+                val uniqueSaidWhos = notes.mapNotNull { it.saidWho }.distinct()
+                val uniqueTitles = notes.mapNotNull { it.title }.distinct()
+
+                if (saidWho.isBlank()) {
+                    if (uniqueSaidWhos.size == 1) {
+                        saidWho = uniqueSaidWhos.first()
+                        pendingSaidWhoSuggestions = emptyList()
+                    } else if (uniqueSaidWhos.size > 1) {
+                        pendingSaidWhoSuggestions = uniqueSaidWhos
+                    } else {
+                        pendingSaidWhoSuggestions = emptyList()
+                    }
+                }
+                if (title.isBlank()) {
+                    if (uniqueTitles.size == 1) {
+                        title = uniqueTitles.first()
+                        pendingTitleSuggestions = emptyList()
+                    } else if (uniqueTitles.size > 1) {
+                        pendingTitleSuggestions = uniqueTitles
+                    } else {
+                        pendingTitleSuggestions = emptyList()
+                    }
+                }
+            }
+        }
+    }
+
+    // --- Field Focus Handlers ---
+    fun onSaidWhoFocus(focused: Boolean) { saidWhoFieldFocused = focused }
+    fun onTitleFocus(focused: Boolean) { titleFieldFocused = focused }
+    fun onSourceFocus(focused: Boolean) { sourceFieldFocused = focused }
+
+    // --- Suggestion Providers ---
+    val saidWhoSuggestionList = if (saidWhoFieldFocused && pendingSaidWhoSuggestions.isNotEmpty()) {
+        if (saidWho.isBlank()) {
+            pendingSaidWhoSuggestions
+        } else {
+            filterSuggestions(saidWho, pendingSaidWhoSuggestions)
+        }
+    } else {
+        saidWhoSuggestions
+    }
+    val titleSuggestionList = if (titleFieldFocused && pendingTitleSuggestions.isNotEmpty()) {
+        if (title.isBlank()) pendingTitleSuggestions else filterSuggestions(title, pendingTitleSuggestions)
+    } else {
+        titleSuggestions
+    }
+    val sourceSuggestionList = if (sourceFieldFocused && pendingSourceSuggestions.isNotEmpty()) {
+        if (source.isBlank()) pendingSourceSuggestions else filterSuggestions(source, pendingSourceSuggestions)
+    } else {
+        sourceSuggestions
+    }
+
+    // --- Clear pending suggestions on selection ---
+    fun clearPendingSuggestions(field: String) {
+        when (field) {
+            "saidWho" -> pendingSaidWhoSuggestions = emptyList()
+            "title" -> pendingTitleSuggestions = emptyList()
+            "source" -> pendingSourceSuggestions = emptyList()
+        }
+    }
+
+    // --- Modified onXSelected to clear pending suggestions ---
+    fun onSaidWhoSelected(selectedSaidWho: String) {
+        coroutineScope.launch {
+            handleSelection("saidWho", selectedSaidWho)
+            clearPendingSuggestions("saidWho")
+        }
+    }
+    fun onTitleSelected(selectedTitle: String) {
+        coroutineScope.launch {
+            handleSelection("title", selectedTitle)
+            clearPendingSuggestions("title")
+        }
+    }
+    fun onSourceSelected(selectedSource: String) {
+        coroutineScope.launch {
+            handleSelection("source", selectedSource)
+            clearPendingSuggestions("source")
+        }
+    }
 
     // --- Tag Chip Logic ---
     val allTagsRaw by produceState(initialValue = emptyList<String?>()) {
@@ -112,6 +319,66 @@ fun NoteDialog(
     val tagSuggestions = if (tagInput.isNotBlank()) {
         allTags.filter { it.startsWith(tagInput, ignoreCase = true) && !confirmedTags.contains(it) }.take(10)
     } else emptyList()
+
+    val tagField = FieldSpec(
+        tagInput,
+        { input ->
+            // Handle ',' character to add tag
+            if (input.endsWith(",")) {
+                val trimmed = input.trimEnd(',')
+                if (trimmed.isNotEmpty() && !confirmedTags.contains(trimmed)) {
+                    confirmedTags = confirmedTags + trimmed
+                }
+                tagInput = ""
+            } else {
+                tagInput = input
+            }
+        },
+        "Tag",
+        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(
+            onDone = {
+                val trimmed = tagInput.trim()
+                if (trimmed.isNotEmpty() && !confirmedTags.contains(trimmed)) {
+                    confirmedTags = confirmedTags + trimmed
+                }
+                tagInput = ""
+            }
+        ),
+        suggestions = tagSuggestions,
+        onSuggestionClick = { suggestion ->
+            if (!confirmedTags.contains(suggestion)) {
+                confirmedTags = confirmedTags + suggestion
+            }
+            tagInput = ""
+        }
+    )
+
+    val fields = when (category) {
+        "BOOK" -> listOf(
+            FieldSpec(saidWho, { saidWho = it }, "saidWho", suggestions = saidWhoSuggestionList, onSuggestionClick = { onSaidWhoSelected(it) }, onFocusChanged = { onSaidWhoFocus(it) }),
+            FieldSpec(title, { title = it }, "Title", suggestions = titleSuggestionList, onSuggestionClick = { onTitleSelected(it) }, onFocusChanged = { onTitleFocus(it) }),
+            FieldSpec(source, { source = it }, "Publisher", suggestions = sourceSuggestionList, onSuggestionClick = { onSourceSelected(it) }, onFocusChanged = { onSourceFocus(it) }),
+            FieldSpec(page, { page = it }, "Page", keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)),
+        ) + tagField
+        "WEB" -> listOf(
+            FieldSpec(saidWho, { saidWho = it }, "saidWho", suggestions = saidWhoSuggestionList, onSuggestionClick = { onSaidWhoSelected(it) }, onFocusChanged = { onSaidWhoFocus(it) }),
+            FieldSpec(title, { title = it }, "Title", suggestions = titleSuggestionList, onSuggestionClick = { onTitleSelected(it) }, onFocusChanged = { onTitleFocus(it) }),
+            FieldSpec(source, { source = it }, "Website", suggestions = sourceSuggestionList, onSuggestionClick = { onSourceSelected(it) }, onFocusChanged = { onSourceFocus(it) }),
+            FieldSpec(url, { url = it }, "URL")
+        ) + tagField
+        "TALK" -> listOf(
+            FieldSpec(saidWho, { saidWho = it }, "saidWho", suggestions = saidWhoSuggestionList, onSuggestionClick = { onSaidWhoSelected(it) }, onFocusChanged = { onSaidWhoFocus(it) }),
+            FieldSpec(title, { title = it }, "Title", suggestions = titleSuggestionList, onSuggestionClick = { onTitleSelected(it) }, onFocusChanged = { onTitleFocus(it) }),
+            FieldSpec(source, { source = it }, "Channel", suggestions = sourceSuggestionList, onSuggestionClick = { onSourceSelected(it) }, onFocusChanged = { onSourceFocus(it) }),
+            FieldSpec(page, { page = it }, "Number", keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)),
+            FieldSpec(url, { url = it }, "URL")
+        ) + tagField
+        "THOUGHTS" -> listOf(
+            FieldSpec(source, { source = it }, "Where?", maxLines = 3, singleLine = false, suggestions = sourceSuggestionList, onSuggestionClick = { onSourceSelected(it) }, onFocusChanged = { onSourceFocus(it) })
+        ) + tagField
+        else -> emptyList()
+    }
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -152,7 +419,7 @@ fun NoteDialog(
                             .fillMaxHeight()
                             .heightIn(min = 180.dp),
                         singleLine = false,
-                        maxLines = 15,
+                        maxLines = 13,
                     )
 
                     Spacer(Modifier.height(12.dp))
@@ -227,34 +494,33 @@ fun NoteDialog(
                     )
 
                     val fields = when (category) {
-
                         "BOOK" -> listOf(
-                            FieldSpec(saidWho, { saidWho = it }, "saidWho", suggestions = saidWhoSuggestions, onSuggestionClick = { saidWho = it }),
-                            FieldSpec(title, { title = it }, "Title", suggestions = titleSuggestions, onSuggestionClick = { title = it }),
-                            FieldSpec(source, { source = it }, "Publisher", suggestions = sourceSuggestions, onSuggestionClick = { source = it }),
+                            FieldSpec(saidWho, { saidWho = it }, "saidWho", suggestions = saidWhoSuggestionList, onSuggestionClick = { onSaidWhoSelected(it) }, onFocusChanged = { onSaidWhoFocus(it) }),
+                            FieldSpec(title, { title = it }, "Title", suggestions = titleSuggestionList, onSuggestionClick = { onTitleSelected(it) }, onFocusChanged = { onTitleFocus(it) }),
+                            FieldSpec(source, { source = it }, "Publisher", suggestions = sourceSuggestionList, onSuggestionClick = { onSourceSelected(it) }, onFocusChanged = { onSourceFocus(it) }),
                             FieldSpec(page, { page = it }, "Page", keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)),
-                            ) + tagField
+                        ) + tagField
                         "WEB" -> listOf(
-                            FieldSpec(saidWho, { saidWho = it }, "saidWho", suggestions = saidWhoSuggestions, onSuggestionClick = { saidWho = it }),
-                            FieldSpec(title, { title = it }, "Title", suggestions = titleSuggestions, onSuggestionClick = { title = it }),
-                            FieldSpec(source, { source = it }, "Website", suggestions = sourceSuggestions, onSuggestionClick = { source = it }),
+                            FieldSpec(saidWho, { saidWho = it }, "saidWho", suggestions = saidWhoSuggestionList, onSuggestionClick = { onSaidWhoSelected(it) }, onFocusChanged = { onSaidWhoFocus(it) }),
+                            FieldSpec(title, { title = it }, "Title", suggestions = titleSuggestionList, onSuggestionClick = { onTitleSelected(it) }, onFocusChanged = { onTitleFocus(it) }),
+                            FieldSpec(source, { source = it }, "Website", suggestions = sourceSuggestionList, onSuggestionClick = { onSourceSelected(it) }, onFocusChanged = { onSourceFocus(it) }),
                             FieldSpec(url, { url = it }, "URL")
                         ) + tagField
                         "TALK" -> listOf(
-                            FieldSpec(saidWho, { saidWho = it }, "saidWho", suggestions = saidWhoSuggestions, onSuggestionClick = { saidWho = it }),
-                            FieldSpec(title, { title = it }, "Title", suggestions = titleSuggestions, onSuggestionClick = { title = it }),
-                            FieldSpec(source, { source = it }, "Channel"),
+                            FieldSpec(saidWho, { saidWho = it }, "saidWho", suggestions = saidWhoSuggestionList, onSuggestionClick = { onSaidWhoSelected(it) }, onFocusChanged = { onSaidWhoFocus(it) }),
+                            FieldSpec(title, { title = it }, "Title", suggestions = titleSuggestionList, onSuggestionClick = { onTitleSelected(it) }, onFocusChanged = { onTitleFocus(it) }),
+                            FieldSpec(source, { source = it }, "Channel", suggestions = sourceSuggestionList, onSuggestionClick = { onSourceSelected(it) }, onFocusChanged = { onSourceFocus(it) }),
                             FieldSpec(page, { page = it }, "Number", keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)),
                             FieldSpec(url, { url = it }, "URL")
                         ) + tagField
                         "THOUGHTS" -> listOf(
-                            FieldSpec(source, { source = it }, "Where?", maxLines = 3, singleLine = false)
+                            FieldSpec(source, { source = it }, "Where?", maxLines = 3, singleLine = false, suggestions = sourceSuggestionList, onSuggestionClick = { onSourceSelected(it) }, onFocusChanged = { onSourceFocus(it) })
                         ) + tagField
                         else -> emptyList()
                     }
 
                     Spacer(modifier = Modifier.height(18.dp))
-                    fields.forEachIndexed { idx, (value, onChange, label, modifier, maxLines, singleLine, keyboardOptions, keyboardActions, suggestions, onSuggestionClick) ->
+                    fields.forEachIndexed { idx, (value, onChange, label, modifier, maxLines, singleLine, keyboardOptions, keyboardActions, suggestions, onSuggestionClick, onFocusChanged) ->
                         OptionalTextField(
                             value = value,
                             onValueChange = onChange,
@@ -265,7 +531,8 @@ fun NoteDialog(
                             keyboardOptions = keyboardOptions,
                             keyboardActions = keyboardActions,
                             suggestions = suggestions,
-                            onSuggestionClick = onSuggestionClick
+                            onSuggestionClick = onSuggestionClick,
+                            onFocusChanged = onFocusChanged
                         )
 
                         // Check if the current field is "Title" and show the error message if validation fails
@@ -325,24 +592,6 @@ fun NoteDialog(
                             )
                             onSave(newNote)
                             onDismiss()
-                            // Validation logic
-//                            val isSourceTitleMandatory = page.isNotBlank() || source.isNotBlank()
-//                            if (isSourceTitleMandatory && title.isBlank()) {
-//                                showTitleMissingError = true
-//                            } else {
-//                                showTitleMissingError = false
-//                                val newNote = initialNote.copy(
-//                                    text = text,
-//                                    saidWho = saidWho.ifBlank { null },
-//                                    title = title.ifBlank { null },
-//                                    url = url.ifBlank { null },
-//                                    page = page.ifBlank { null },
-//                                    source = source.ifBlank { null },
-//                                    tags = confirmedTags.takeIf { it.isNotEmpty() }
-//                                )
-//                                onSave(newNote)
-//                                onDismiss()
-//                            }
                         },
                         enabled = text.isNotBlank()
                     ) { Text("Save") }

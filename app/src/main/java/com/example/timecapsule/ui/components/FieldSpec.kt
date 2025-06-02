@@ -16,4 +16,5 @@ data class FieldSpec(
     val keyboardActions: KeyboardActions = KeyboardActions.Default,
     val suggestions: List<String> = emptyList(),
     val onSuggestionClick: ((String) -> Unit)? = null,
+    val onFocusChanged: ((Boolean) -> Unit)? = null,
 )
