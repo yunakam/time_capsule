@@ -58,15 +58,74 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
     }
 }
 
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        // Add nullable category column to notes table
+        database.execSQL("ALTER TABLE notes ADD COLUMN category TEXT")
+        
+        // Update categories based on existing data patterns
+        // If source is not null, it's likely a BOOK
+        database.execSQL("""
+            UPDATE notes 
+            SET category = 'BOOK' 
+            WHERE source IS NOT NULL 
+                AND source != ''
+        """.trimIndent())
+
+        // If url is not null, it's likely from the WEB
+        database.execSQL("""
+            UPDATE notes 
+            SET category = 'WEB' 
+            WHERE url IS NOT NULL 
+                AND url != ''
+        """.trimIndent())
+
+        // If saidWho exists but no source/url, it's likely a TALK
+        database.execSQL("""
+            UPDATE notes 
+            SET category = 'TALK' 
+            WHERE saidWho IS NOT NULL 
+                AND saidWho != '' 
+                AND (source IS NULL OR source = '')
+                AND (url IS NULL OR url = '')
+        """.trimIndent())
+        
+        // Create source_bindings table
+        database.execSQL("""
+            CREATE TABLE source_bindings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                saidWho TEXT NOT NULL,
+                title TEXT NOT NULL,
+                source TEXT
+            )
+        """.trimIndent())
+        
+        // Create indices for faster lookups
+        database.execSQL("CREATE INDEX index_source_bindings_saidWho ON source_bindings(saidWho)")
+        database.execSQL("CREATE INDEX index_source_bindings_title ON source_bindings(title)")
+        database.execSQL("CREATE INDEX index_source_bindings_source ON source_bindings(source)")
+        
+        // Populate source_bindings table with existing data
+        database.execSQL("""
+            INSERT INTO source_bindings (saidWho, title, source)
+            SELECT saidWho, title, source 
+            FROM notes 
+            WHERE saidWho IS NOT NULL 
+                AND title IS NOT NULL
+        """.trimIndent())
+    }
+}
+
 @Database(
-    entities = [Note::class, NoteVisit::class],
-    version = 6,
+    entities = [Note::class, NoteVisit::class, SourceBinding::class],
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun noteDao(): NoteDao
     abstract fun noteVisitDao(): NoteVisitDao
+    abstract fun sourceBindingDao(): SourceBindingDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
@@ -78,7 +137,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "notes.db"
                 )
-                    .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                    .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                     .build()
                     .also { INSTANCE = it }
             }

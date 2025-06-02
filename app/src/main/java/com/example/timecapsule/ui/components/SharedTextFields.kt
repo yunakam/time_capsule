@@ -26,6 +26,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -64,6 +65,7 @@ fun OptionalTextField(
     ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
+    val (suggestionSelected, setSuggestionSelected) = remember { mutableStateOf(false) }
 
     // Only apply border when focused
     val borderModifier = if (isFocused) {
@@ -111,7 +113,10 @@ fun OptionalTextField(
         Column {
             TextField(
                 value = value,
-                onValueChange = onValueChange,
+                onValueChange = { newValue ->
+                    onValueChange(newValue)
+                    setSuggestionSelected(false)
+                },
                 modifier = modifier
                     .then(borderModifier)
                     .fillMaxWidth()
@@ -139,7 +144,8 @@ fun OptionalTextField(
                 onSuggestionClick != null &&
                 value.isNotBlank() &&
                 suggestions.isNotEmpty() &&
-                isFocused
+                isFocused &&
+                !suggestionSelected
             ) {
                 Column(
                     Modifier
@@ -158,6 +164,7 @@ fun OptionalTextField(
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
                                 .clickable {
                                     onSuggestionClick(suggestion)
+                                    setSuggestionSelected(true)
                                 }
                         )
                     }

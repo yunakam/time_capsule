@@ -16,6 +16,7 @@ data class Note(
     val source: String? = null, // publisher, channel etc.
     val url: String? = null,
     val tags: List<String>? = null, // store as a list
+    val category: NoteCategory? = null,
 
     val createdAt: Date = Date(),
     val lastVisitedAt: Date? = null,

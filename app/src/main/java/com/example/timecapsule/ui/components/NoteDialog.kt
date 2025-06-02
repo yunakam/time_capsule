@@ -35,9 +35,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.timecapsule.data.Note
+import com.example.timecapsule.data.NoteCategory
 import com.example.timecapsule.data.NoteDao
 import kotlin.random.Random
 
@@ -51,8 +53,8 @@ fun NoteDialog(
     noteDao: NoteDao,
     onCancel: (() -> Unit)? = null,
 ) {
-    var category by remember { mutableStateOf("BOOK") }
-    val categories = listOf("BOOK", "WEB", "TALK", "THOUGHTS")
+    var category by remember { mutableStateOf(initialNote.category?.name ?: "BOOK") }
+    val categories = NoteCategory.values().map { it.name }
 
     var text by remember { mutableStateOf(initialNote.text) }
     var saidWho by remember { mutableStateOf(initialNote.saidWho ?: "") }
@@ -70,6 +72,7 @@ fun NoteDialog(
 
     // For Edit: reset fields when note changes
     LaunchedEffect(initialNote) {
+        category = initialNote.category?.name ?: "BOOK"
         text = initialNote.text
         saidWho = initialNote.saidWho ?: ""
         title = initialNote.title ?: ""
@@ -136,7 +139,7 @@ fun NoteDialog(
                     OutlinedTextField(
                         value = text,
                         onValueChange = { text = it },
-                        placeholder = { 
+                        placeholder = {
                             Text(
                                 text = randomPlaceholder,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
@@ -179,7 +182,7 @@ fun NoteDialog(
                                     color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                                 ),
                                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 6.dp, vertical = 4.dp)
-                            ) { 
+                            ) {
                                 Text(
                                     text = cat,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
@@ -229,8 +232,8 @@ fun NoteDialog(
                             FieldSpec(saidWho, { saidWho = it }, "saidWho", suggestions = saidWhoSuggestions, onSuggestionClick = { saidWho = it }),
                             FieldSpec(title, { title = it }, "Title", suggestions = titleSuggestions, onSuggestionClick = { title = it }),
                             FieldSpec(source, { source = it }, "Publisher", suggestions = sourceSuggestions, onSuggestionClick = { source = it }),
-                            FieldSpec(page, { page = it }, "Page")
-                        ) + tagField
+                            FieldSpec(page, { page = it }, "Page", keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)),
+                            ) + tagField
                         "WEB" -> listOf(
                             FieldSpec(saidWho, { saidWho = it }, "saidWho", suggestions = saidWhoSuggestions, onSuggestionClick = { saidWho = it }),
                             FieldSpec(title, { title = it }, "Title", suggestions = titleSuggestions, onSuggestionClick = { title = it }),
@@ -240,7 +243,9 @@ fun NoteDialog(
                         "TALK" -> listOf(
                             FieldSpec(saidWho, { saidWho = it }, "saidWho", suggestions = saidWhoSuggestions, onSuggestionClick = { saidWho = it }),
                             FieldSpec(title, { title = it }, "Title", suggestions = titleSuggestions, onSuggestionClick = { title = it }),
-                            FieldSpec(source, { source = it }, "Channel")
+                            FieldSpec(source, { source = it }, "Channel"),
+                            FieldSpec(page, { page = it }, "Number", keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)),
+                            FieldSpec(url, { url = it }, "URL")
                         ) + tagField
                         "THOUGHTS" -> listOf(
                             FieldSpec(source, { source = it }, "Where?", maxLines = 3, singleLine = false)
@@ -309,6 +314,7 @@ fun NoteDialog(
                     Button(
                         onClick = {
                             val newNote = initialNote.copy(
+                                category = NoteCategory.valueOf(category),
                                 text = text,
                                 saidWho = saidWho.ifBlank { null },
                                 title = title.ifBlank { null },
