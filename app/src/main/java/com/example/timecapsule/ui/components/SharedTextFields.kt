@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -80,7 +81,7 @@ fun OptionalTextField(
             .border(
                 width = 1.5.dp,
                 color = MaterialTheme.colorScheme.primary,
-                shape = RoundedCornerShape(20.dp)
+                shape = RoundedCornerShape(16.dp)
             )
     } else {
         Modifier
@@ -88,12 +89,12 @@ fun OptionalTextField(
 
     Row(
         verticalAlignment = Alignment.Top,
-        modifier = Modifier.padding(start = 12.dp)
+        modifier = Modifier.padding(start = 0.dp)
     ) {
         Box(
             modifier = Modifier
-                .width(54.dp)
-                .padding(top = 18.dp, end = 8.dp),
+                .width(60.dp)
+                .padding(top = 18.dp, end = 4.dp),
             contentAlignment = Alignment.CenterEnd
         ) {
             if (label == "saidWho") {
@@ -112,16 +113,19 @@ fun OptionalTextField(
             }
         }
         Spacer(modifier = Modifier.width(12.dp))
-        Column {
+        Column(
+            modifier = Modifier.padding(vertical = 0.dp)
+        ) {
             TextField(
                 value = value,
-                onValueChange = { newValue ->
+                onValueChange = { newValue: String ->
                     onValueChange(newValue)
                     setSuggestionSelected(false)
                 },
                 modifier = modifier
                     .then(borderModifier)
                     .fillMaxWidth()
+                    .height(50.dp)
                     .background(Color.Transparent),
                 keyboardOptions = keyboardOptions,
                 keyboardActions = keyboardActions,
@@ -138,8 +142,8 @@ fun OptionalTextField(
                 ),
                 interactionSource = interactionSource,
                 placeholder = null,
-                label = null
-            )
+                label = null,
+                )
 
             // Suggestion list shows up as Column
             if (
@@ -162,7 +166,7 @@ fun OptionalTextField(
                             fontSize = 12.sp,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
                                 .clickable {
                                     onSuggestionClick(suggestion)
                                     setSuggestionSelected(true)

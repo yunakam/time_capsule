@@ -354,32 +354,6 @@ fun NoteDialog(
         }
     )
 
-    val fields = when (category) {
-        "BOOK" -> listOf(
-            FieldSpec(saidWho, { saidWho = it }, "saidWho", suggestions = saidWhoSuggestionList, onSuggestionClick = { onSaidWhoSelected(it) }, onFocusChanged = { onSaidWhoFocus(it) }),
-            FieldSpec(title, { title = it }, "Title", suggestions = titleSuggestionList, onSuggestionClick = { onTitleSelected(it) }, onFocusChanged = { onTitleFocus(it) }),
-            FieldSpec(source, { source = it }, "Publisher", suggestions = sourceSuggestionList, onSuggestionClick = { onSourceSelected(it) }, onFocusChanged = { onSourceFocus(it) }),
-            FieldSpec(page, { page = it }, "Page", keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)),
-        ) + tagField
-        "WEB" -> listOf(
-            FieldSpec(saidWho, { saidWho = it }, "saidWho", suggestions = saidWhoSuggestionList, onSuggestionClick = { onSaidWhoSelected(it) }, onFocusChanged = { onSaidWhoFocus(it) }),
-            FieldSpec(title, { title = it }, "Title", suggestions = titleSuggestionList, onSuggestionClick = { onTitleSelected(it) }, onFocusChanged = { onTitleFocus(it) }),
-            FieldSpec(source, { source = it }, "Website", suggestions = sourceSuggestionList, onSuggestionClick = { onSourceSelected(it) }, onFocusChanged = { onSourceFocus(it) }),
-            FieldSpec(url, { url = it }, "URL")
-        ) + tagField
-        "TALK" -> listOf(
-            FieldSpec(saidWho, { saidWho = it }, "saidWho", suggestions = saidWhoSuggestionList, onSuggestionClick = { onSaidWhoSelected(it) }, onFocusChanged = { onSaidWhoFocus(it) }),
-            FieldSpec(title, { title = it }, "Title", suggestions = titleSuggestionList, onSuggestionClick = { onTitleSelected(it) }, onFocusChanged = { onTitleFocus(it) }),
-            FieldSpec(source, { source = it }, "Channel", suggestions = sourceSuggestionList, onSuggestionClick = { onSourceSelected(it) }, onFocusChanged = { onSourceFocus(it) }),
-            FieldSpec(page, { page = it }, "Number", keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)),
-            FieldSpec(url, { url = it }, "URL")
-        ) + tagField
-        "THOUGHTS" -> listOf(
-            FieldSpec(source, { source = it }, "Where?", maxLines = 3, singleLine = false, suggestions = sourceSuggestionList, onSuggestionClick = { onSourceSelected(it) }, onFocusChanged = { onSourceFocus(it) })
-        ) + tagField
-        else -> emptyList()
-    }
-
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(16.dp),
@@ -519,7 +493,7 @@ fun NoteDialog(
                         else -> emptyList()
                     }
 
-                    Spacer(modifier = Modifier.height(18.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     fields.forEachIndexed { idx, (value, onChange, label, modifier, maxLines, singleLine, keyboardOptions, keyboardActions, suggestions, onSuggestionClick, onFocusChanged) ->
                         OptionalTextField(
                             value = value,
