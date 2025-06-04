@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -48,9 +49,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.compose.AppTheme
 import com.example.compose.ThemeType
+import com.example.timecapsule.R
 import com.example.timecapsule.data.AppDatabase
 import com.example.timecapsule.data.FilterType
 import com.example.timecapsule.data.Note
@@ -256,15 +259,27 @@ class MainActivity : ComponentActivity() {
                                                     onClick = { showSortMenu = true },
                                                     modifier = Modifier
                                                         .padding(end = 16.dp, bottom = 12.dp)
-                                                        .width(180.dp)
+                                                        .width(200.dp)
                                                         .size(48.dp),
                                                     shape = CircleShape,
                                                 ) {
-                                                    Text(
-                                                        text = sortType.label,
-                                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                                        style = MaterialTheme.typography.labelLarge
-                                                    )
+                                                    Row(
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        modifier = Modifier.padding(horizontal = 12.dp)
+                                                    ) {
+                                                        Icon(
+                                                            painter = painterResource(id = R.drawable.ic_sort),
+                                                            contentDescription = "Sort",
+                                                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                                            modifier = Modifier.size(20.dp)
+                                                        )
+                                                        Spacer(modifier = Modifier.width(8.dp))
+                                                        Text(
+                                                            text = sortType.label,
+                                                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                                            style = MaterialTheme.typography.labelLarge
+                                                        )
+                                                    }
                                                 }
                                                 DropdownMenu(
                                                     expanded = showSortMenu,
@@ -363,12 +378,13 @@ class MainActivity : ComponentActivity() {
                                 val sortedNotes = when (sortType) {
                                     SortType.Newest -> notes.sortedByDescending { it.createdAt }
                                     SortType.Oldest -> notes.sortedBy { it.createdAt }
+                                    SortType.NewlyEdited -> notes.sortedByDescending { it.lastUpdated }
                                     SortType.MostForgotten -> notes.sortedBy { it.score }
                                     SortType.LeastForgotten -> notes.sortedByDescending { it.score }
                                     SortType.LeastRecentlyDug -> notes.sortedByDescending { it.lastVisitedAt?.time ?: Long.MIN_VALUE }
                                     SortType.MostRecentlyDug -> notes.sortedBy { it.lastVisitedAt?.time ?: Long.MAX_VALUE }
-                                    SortType.LeastDug -> notes.sortedBy { note: Note -> note.visitTimestamps?.size ?: 0 }
-                                    SortType.MostDug -> notes.sortedByDescending { it.visitTimestamps?.size ?: 0 }
+//                                    SortType.LeastDug -> notes.sortedBy { note: Note -> note.visitTimestamps?.size ?: 0 }
+//                                    SortType.MostDug -> notes.sortedByDescending { it.visitTimestamps?.size ?: 0 }
                                 }
                                 val filteredNotes = if (searchQuery.isBlank()) {
                                     sortedNotes
