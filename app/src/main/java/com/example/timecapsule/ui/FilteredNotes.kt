@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow.Companion.Ellipsis
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.timecapsule.data.FilterType
@@ -69,7 +70,9 @@ fun FilteredNotesScreen(
                         style = MaterialTheme.typography.bodyMedium.copy(
                             color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 16.sp
-                        )
+                        ),
+                        maxLines = 1,
+                        overflow = Ellipsis
                     )
                 },
                 navigationIcon = {

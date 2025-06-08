@@ -60,7 +60,7 @@ fun metaText(
     fontSize: TextUnit = 14.sp,
     color: Color = MaterialTheme.colorScheme.secondary,
     modifier: Modifier = Modifier,
-    maxLines: Int = 2,
+//    maxLines: Int = 2,
     overflow: TextOverflow = TextOverflow.Ellipsis,
     onClick: (() -> Unit)? = null
 ) {
@@ -117,7 +117,7 @@ fun metaText(
                 fontStyle = FontStyle.Italic,
                 fontSize = fontSize,
                 color = color,
-                maxLines = maxLines,
+//                maxLines = maxLines,
                 overflow = overflow,
                 modifier = effectiveModifier // Apply the constructed modifier
             )
@@ -217,7 +217,7 @@ fun NoteViewDialog(
                                val detailsString = when {
                                    details.isEmpty() -> ""
                                    note.title.isNullOrBlank() -> details.joinToString(", ")
-                                   else -> details.joinToString(", ", prefix = " (", postfix = ")")
+                                   else -> details.joinToString(", ", prefix = "(", postfix = ")")
                                }
 
                                if (!note.title.isNullOrBlank()) {
@@ -225,7 +225,10 @@ fun NoteViewDialog(
                                        append('"')
                                        append(note.title)
                                        append('"')
-                                       if (detailsString.isNotBlank()) append(detailsString)
+                                       if (detailsString.isNotBlank()) {
+                                           append('\u00A0') // Non-breaking space (but still breaks...)
+                                           append(detailsString)
+                                       }
                                    }
                                    metaText(
                                        text = fullString,
