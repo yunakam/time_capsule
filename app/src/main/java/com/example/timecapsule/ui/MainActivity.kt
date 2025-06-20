@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -50,6 +51,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight.Companion.Bold
+import androidx.compose.ui.text.font.FontWeight.Companion.Normal
 import androidx.compose.ui.unit.dp
 import com.example.compose.AppTheme
 import com.example.compose.ThemeType
@@ -259,9 +262,7 @@ class MainActivity : ComponentActivity() {
                                                     onClick = { showSortMenu = true },
                                                     modifier = Modifier
                                                         .padding(end = 16.dp, bottom = 12.dp)
-                                                        .width(200.dp)
                                                         .size(48.dp),
-                                                    shape = CircleShape,
                                                 ) {
                                                     Row(
                                                         verticalAlignment = Alignment.CenterVertically,
@@ -285,7 +286,7 @@ class MainActivity : ComponentActivity() {
                                                     expanded = showSortMenu,
                                                     onDismissRequest = { showSortMenu = false },
                                                     modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer),
-                                                    offset = androidx.compose.ui.unit.DpOffset(x = 40.dp, y = (-8).dp),
+                                                    offset = androidx.compose.ui.unit.DpOffset(x = 0.dp, y = (-8).dp),
                                                     shape = RoundedCornerShape(12.dp)
                                                 ) {
                                                     SortType.menuOptions.forEach { option ->
@@ -293,13 +294,15 @@ class MainActivity : ComponentActivity() {
                                                             text = { 
                                                                 Text(
                                                                     option.menuText,
-                                                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                                                    fontWeight = if (option == sortType) Bold else Normal
                                                                 ) 
                                                             },
                                                             onClick = {
                                                                 sortType = option
                                                                 showSortMenu = false
-                                                            }
+                                                            },
+                                                            modifier = Modifier.height(36.dp)
                                                         )
                                                     }
                                                 }
