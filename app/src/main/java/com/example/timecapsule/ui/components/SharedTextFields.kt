@@ -107,7 +107,6 @@ fun OptionalTextField(
     ) {
         Box(
             modifier = Modifier
-                .width(60.dp)
                 .padding(end = 4.dp),
             contentAlignment = Alignment.CenterEnd
         ) {

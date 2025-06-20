@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
@@ -166,6 +165,7 @@ fun NoteViewDialog(
 ) {
     Dialog(
         onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
     ) {
        Surface(
            shape = MaterialTheme.shapes.medium,
@@ -174,7 +174,7 @@ fun NoteViewDialog(
        ) {
            Box(
                modifier = Modifier
-                   .widthIn(max = 400.dp)
+                   .fillMaxWidth(0.9f)
                    .heightIn(max = 650.dp)
                    .padding(24.dp)
            ) {

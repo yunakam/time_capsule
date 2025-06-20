@@ -106,8 +106,6 @@ fun NoteDialog(
     val categories = NoteCategory.entries.map { it.name }
 
     var text by remember { mutableStateOf(initialNote.text) }
-//    var textFieldValue by remember { mutableStateOf(TextFieldValue(initialNote.text)) }
-
     var textFieldValue by remember {
         mutableStateOf(
             TextFieldValue(
@@ -409,7 +407,10 @@ fun NoteDialog(
         }
     )
 
-    Dialog(onDismissRequest = onDismiss) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+    ) {
         Surface(
             shape = RoundedCornerShape(16.dp),
             tonalElevation = 8.dp,
@@ -417,7 +418,7 @@ fun NoteDialog(
         ) {
             Column(
                 modifier = Modifier
-                    .widthIn(max = 400.dp)
+                    .fillMaxWidth(0.9f)
                     .heightIn(max = 600.dp)
                     .padding(24.dp)
             ) {
@@ -429,17 +430,10 @@ fun NoteDialog(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     // Main text input field
-//                    MainTextFieldNonHighlightable(
-//                        textFieldValue = textFieldValue,
-//                        onValueChange = { newValue -> textFieldValue = newValue },
-//                    )
-
                     MainTextFieldHighlightable(
                         textFieldValue = textFieldValue,
                         onValueChange = { newValue -> textFieldValue = newValue }
                     )
-
-//                    Spacer(Modifier.height(1.dp))
 
                     // Highlight button
                     Row(
@@ -479,7 +473,7 @@ fun NoteDialog(
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_bookmark_add),
                                 contentDescription = "Make text bold",
-                                modifier = Modifier.size(18.dp),
+                                modifier = Modifier.size(24.dp),
                                 tint = MaterialTheme.colorScheme.secondary
                             )
                         }
@@ -500,7 +494,7 @@ fun NoteDialog(
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_bookmark_remove),
                                 contentDescription = "Remove all highlights",
-                                modifier = Modifier.size(18.dp),
+                                modifier = Modifier.size(24.dp),
                                 tint = MaterialTheme.colorScheme.secondary
                             )
                         }
