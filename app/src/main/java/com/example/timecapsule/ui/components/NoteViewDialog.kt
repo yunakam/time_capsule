@@ -21,17 +21,23 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,6 +58,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
 import com.example.timecapsule.R
 import com.example.timecapsule.data.Note
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -146,6 +153,7 @@ fun dataText(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteViewDialog(
     note: Note,
@@ -266,7 +274,7 @@ fun NoteViewDialog(
                                } else if (detailsString.isNotBlank()) {
                                    metaText(detailsString)
                                }
-                               
+
                                Spacer(Modifier.height(12.dp))
                                note.url?.takeIf { it.isNotBlank() }?.let {
                                    metaText(it)
@@ -290,26 +298,12 @@ fun NoteViewDialog(
                                    }
                                }
 
-                               Spacer(Modifier.height(18.dp))
-
-                               Row(
-                                   modifier = Modifier.fillMaxWidth(),
-                                   horizontalArrangement = Arrangement.End
-                               ) {
-                                   Column(modifier = Modifier.padding(end = 12.dp, bottom = 0.dp)) {
-                                       dataText("Created: ${formatDate(note.createdAt)}")
-                                       note.lastVisitedAt?.let {
-                                           dataText("Last Visited: ${formatDate(it)}")
-                                       }
-                                       dataText("Visited: ${note.visitCount}")
-                                   }
-                               }
-
+                               Spacer(Modifier.height(12.dp))
                            }
                        }
                    }
 
-                   // Delete and Edit icons (always visible, outside scroll area)
+                   // Info, Delete and Edit icons (always visible, outside scroll area)
                    Spacer(Modifier.height(8.dp))
                    Row(
                        modifier = Modifier
@@ -318,13 +312,68 @@ fun NoteViewDialog(
                        horizontalArrangement = Arrangement.End,
                        verticalAlignment = Alignment.CenterVertically
                    ) {
-                       IconButton(onClick = { onDelete(note) }) {
-                           Icon(Icons.Default.Delete, contentDescription = "Delete Note")
+                       val tooltipState = rememberTooltipState(isPersistent = true)
+                       val scope = rememberCoroutineScope()
+                       TooltipBox(
+                           positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                           tooltip = {
+                               Surface(
+                                   shape = MaterialTheme.shapes.small,
+                                   color = MaterialTheme.colorScheme.inverseSurface,
+                                   tonalElevation = 2.dp
+                               ) {
+                                   Column(modifier = Modifier.padding(8.dp)) {
+                                       dataText(
+                                           text = "Created: ${formatDate(note.createdAt)}",
+                                           color = MaterialTheme.colorScheme.inverseOnSurface
+                                       )
+                                       note.lastVisitedAt?.let {
+                                           dataText(
+                                               text = "Last Visited: ${formatDate(it)}",
+                                               color = MaterialTheme.colorScheme.inverseOnSurface
+                                           )
+                                       }
+                                       dataText(
+                                           text = "Visited: ${note.visitCount}",
+                                           color = MaterialTheme.colorScheme.inverseOnSurface
+                                       )
+                                   }
+                               }
+                           },
+                           state = tooltipState
+                       ) {
+                           IconButton(onClick = { scope.launch { tooltipState.show() } }) {
+                               Icon(
+                                   Icons.Default.Info,
+                                   contentDescription = "Note Information",
+                                   tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                               )
+                           }
                        }
-                       Spacer(modifier = Modifier.width(8.dp))
-                       IconButton(onClick = onEdit) {
-                           Icon(Icons.Default.Edit, contentDescription = "Edit Note")
+                       Spacer(Modifier.width(12.dp))
+
+                       IconButton(
+                           onClick = { onDelete(note) },
+                           modifier = Modifier.size(28.dp)
+                       ) {
+                           Icon(
+                               Icons.Default.Delete,
+                               contentDescription = "Delete Note",
+                               modifier = Modifier.size(24.dp)
+                               )
                        }
+                       Spacer(modifier = Modifier.width(12.dp))
+                       IconButton(
+                           onClick = onEdit,
+                           modifier = Modifier.size(28.dp)
+                       ) {
+                           Icon(
+                               Icons.Default.Edit,
+                               contentDescription = "Edit Note",
+                               modifier = Modifier.size(24.dp)
+                           )
+                       }
+                       Spacer(modifier = Modifier.width(12.dp))
                    }
                }
            }
