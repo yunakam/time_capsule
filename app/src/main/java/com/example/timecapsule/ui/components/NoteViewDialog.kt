@@ -39,7 +39,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
@@ -185,8 +188,34 @@ fun NoteViewDialog(
                                    .verticalScroll(rememberScrollState())
                            ) {
                                SelectionContainer {
+                                   val text = note.text
+                                   val boldStyle = SpanStyle(fontWeight = FontWeight.Bold)
+                                   val regex = "\\*\\*(.*?)\\*\\*".toRegex()
+
+                                   val annotatedString = buildAnnotatedString {
+                                       var lastIndex = 0
+                                       regex.findAll(text).forEach { match ->
+                                           val startIndex = match.range.first
+                                           val endIndex = match.range.last + 1
+                                           val content = match.groupValues[1]
+
+                                           if (startIndex > lastIndex) {
+                                               append(text.substring(lastIndex, startIndex))
+                                           }
+
+                                           pushStyle(boldStyle)
+                                           append(content)
+                                           pop()
+
+                                           lastIndex = endIndex
+                                       }
+                                       if (lastIndex < text.length) {
+                                           append(text.substring(lastIndex))
+                                       }
+                                   }
+
                                    Text(
-                                       note.text,
+                                       text = annotatedString,
                                        style = MaterialTheme.typography.bodyLarge,
                                        modifier = Modifier.fillMaxWidth()
                                    )

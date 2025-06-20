@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -18,6 +19,8 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -33,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
@@ -43,11 +47,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.example.timecapsule.R
 import com.example.timecapsule.data.Note
 import com.example.timecapsule.data.NoteCategory
 import com.example.timecapsule.data.NoteDao
 import com.example.timecapsule.data.SourceBindingDao
 import kotlinx.coroutines.launch
+
 
 @Composable
 fun HighlightedText(
@@ -433,41 +439,75 @@ fun NoteDialog(
                         onValueChange = { newValue -> textFieldValue = newValue }
                     )
 
-                    Spacer(Modifier.height(4.dp))
+//                    Spacer(Modifier.height(1.dp))
 
                     // Highlight button
-                    Button(
-                        onClick = {
-                            val selection = textFieldValue.selection
-                            if (selection.start != selection.end) {
-                                try {
-                                    val text = textFieldValue.text
-                                    val selectedText = text.substring(selection.start, selection.end)
-
-                                    // Remove any existing ** markers from the selected text
-                                    val cleanedText = selectedText.replace("**", "")
-                                    // Apply bold formatting to the cleaned text
-                                    val boldText = "**$cleanedText**"
-
-                                    // Replace the selected text with the bold-marked version
-                                    val newText = text.replaceRange(selection.start, selection.end, boldText)
-
-                                    // Update the text field with new text and move cursor to end of bolded section
-                                    val newCursorPos = selection.start + boldText.length
-                                    textFieldValue = textFieldValue.copy(
-                                        text = newText,
-                                        selection = TextRange(newCursorPos)
-                                    )
-                                } catch (e: Exception) {
-                                    // Prevent crashes
-                                }
-                            }
-                        },
-                        modifier = Modifier.align(Alignment.End)
+                    Row(
+                        modifier = Modifier.align(Alignment.End),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text("Bold")
-                    }
+                        // Make text bold
+                        IconButton(
+                            onClick = {
+                                val selection = textFieldValue.selection
+                                if (selection.start != selection.end) {
+                                    try {
+                                        val text = textFieldValue.text
+                                        val selectedText = text.substring(selection.start, selection.end)
 
+                                        // Remove any existing ** markers from the selected text
+                                        val cleanedText = selectedText.replace("**", "")
+                                        // Apply bold formatting to the cleaned text
+                                        val boldText = "**$cleanedText**"
+
+                                        // Replace the selected text with the bold-marked version
+                                        val newText = text.replaceRange(selection.start, selection.end, boldText)
+
+                                        // Update the text field with new text and move cursor to end of bolded section
+                                        val newCursorPos = selection.start + boldText.length
+                                        textFieldValue = textFieldValue.copy(
+                                            text = newText,
+                                            selection = TextRange(newCursorPos)
+                                        )
+                                    } catch (e: Exception) {
+                                        // Prevent crashes
+                                    }
+                                }
+                            },
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_bookmark_add),
+                                contentDescription = "Make text bold",
+                                modifier = Modifier.size(18.dp),
+                                tint = MaterialTheme.colorScheme.secondary
+                            )
+                        }
+
+                        Spacer(Modifier.width(4.dp))
+
+                        // Remove all highlights
+                        IconButton(
+                            onClick = {
+                                val newText = textFieldValue.text.replace("**", "")
+                                textFieldValue = textFieldValue.copy(
+                                    text = newText,
+                                    selection = TextRange(newText.length) // Move cursor to the end
+                                )
+                            },
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_bookmark_remove),
+                                contentDescription = "Remove all highlights",
+                                modifier = Modifier.size(18.dp),
+                                tint = MaterialTheme.colorScheme.secondary
+                            )
+                        }
+
+                        Spacer(Modifier.width(12.dp))
+
+                    }
 
                     Spacer(Modifier.height(12.dp))
 
