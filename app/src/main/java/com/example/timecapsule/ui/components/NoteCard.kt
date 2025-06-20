@@ -75,6 +75,7 @@ fun NoteCard(
         }
 
         val cleanedText = textToProcess
+            .replace("**", "")
             .split("\n")
             .dropLastWhile { it.trim().isEmpty() }
             .joinToString("\n")
