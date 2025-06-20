@@ -58,12 +58,34 @@ fun NoteCard(
     backgroundColor: Color,
 ) {
     val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
-    val cleanedText = note.text
-        .split("\n")
-        .dropLastWhile { it.trim().isEmpty() }
-        .joinToString("\n")
-    val lines = cleanedText.lines()
-    val previewText = if (lines.size > 5) lines.take(5).joinToString("\n") + "\n..." else cleanedText
+
+    val previewText = remember(note.text) {
+        val originalText = note.text
+        val boldStartIndex = originalText.indexOf("**")
+
+        val textToProcess = if (boldStartIndex != -1) {
+            val textFromBold = originalText.substring(boldStartIndex)
+            if (boldStartIndex > 0) {
+                "...$textFromBold"
+            } else {
+                textFromBold
+            }
+        } else {
+            originalText
+        }
+
+        val cleanedText = textToProcess
+            .split("\n")
+            .dropLastWhile { it.trim().isEmpty() }
+            .joinToString("\n")
+
+        val lines = cleanedText.lines()
+        if (lines.size > 5) {
+            lines.take(5).joinToString("\n") + "\n..."
+        } else {
+            cleanedText
+        }
+    }
 
     Card(
         modifier = Modifier

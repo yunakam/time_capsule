@@ -275,7 +275,7 @@ fun NoteViewDialog(
                                // Link icon
                                // NoteSourceLink(url = note.url)
 
-                               Spacer(Modifier.height(24.dp))
+                               Spacer(Modifier.height(12.dp))
                                note.tags?.takeIf { it.isNotEmpty() }?.let { tags ->
                                    FlowRow(
                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
