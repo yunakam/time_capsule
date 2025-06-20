@@ -27,8 +27,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
@@ -102,13 +100,15 @@ fun OptionalTextField(
     }
 
     Row(
-        verticalAlignment = Alignment.Top,
-        modifier = Modifier.padding(start = 0.dp)
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .padding(start = 0.dp)
+            .fillMaxWidth()
     ) {
         Box(
             modifier = Modifier
                 .width(60.dp)
-                .padding(top = 18.dp, end = 4.dp),
+                .padding(end = 4.dp),
             contentAlignment = Alignment.CenterEnd
         ) {
             if (label == "saidWho") {
@@ -128,36 +128,39 @@ fun OptionalTextField(
         }
         Spacer(modifier = Modifier.width(12.dp))
         Column(
-            modifier = Modifier.padding(vertical = 0.dp)
+            modifier = Modifier
+                .padding(vertical = 0.dp)
+                .weight(1f)
         ) {
-            TextField(
+            BasicTextField(
                 value = value,
                 onValueChange = { newValue: String ->
                     onValueChange(newValue)
                     setSuggestionSelected(false)
                 },
-                modifier = modifier
-                    .then(borderModifier)
-                    .fillMaxWidth()
-                    .height(50.dp)
-                    .background(Color.Transparent),
+                interactionSource = interactionSource,
                 keyboardOptions = keyboardOptions,
                 keyboardActions = keyboardActions,
                 maxLines = maxLines,
                 singleLine = singleLine,
-                textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent,
+                textStyle = MaterialTheme.typography.bodySmall.copy(
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface
                 ),
-                interactionSource = interactionSource,
-                placeholder = null,
-                label = null,
-                )
+                decorationBox = { innerTextField ->
+                    Box(
+                        modifier = modifier
+                            .fillMaxWidth()
+                            .then(borderModifier)
+                            .height(40.dp)
+                            .background(Color.Transparent)
+                            .padding(horizontal = 12.dp),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        innerTextField()
+                    }
+                }
+            )
 
             // Suggestion list shows up as Column
             if (
@@ -191,33 +194,6 @@ fun OptionalTextField(
             }
         }
     }
-}
-
-@Composable
-fun MainTextFieldNonHighlightable(
-    textFieldValue: TextFieldValue,
-    onValueChange: (TextFieldValue) -> Unit,
-    randomPlaceholder: String = TextFieldPlaceholders.quotes[Random.nextInt(TextFieldPlaceholders.quotes.size)]
-
-) {
-    OutlinedTextField(
-        value = textFieldValue,
-        onValueChange = onValueChange,
-        placeholder = {
-            Text(
-                text = randomPlaceholder,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                style = MaterialTheme.typography.bodyMedium,
-                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
-            )
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .fillMaxHeight()
-            .heightIn(min = 180.dp),
-        singleLine = false,
-        maxLines = 13,
-    )
 }
 
 @Composable
@@ -371,5 +347,34 @@ fun MainTextFieldHighlightable(
                 innerTextField()
             }
         }
+    )
+}
+
+
+// No longer needed, but kept for reference
+@Composable
+fun MainTextFieldNonHighlightable(
+    textFieldValue: TextFieldValue,
+    onValueChange: (TextFieldValue) -> Unit,
+    randomPlaceholder: String = TextFieldPlaceholders.quotes[Random.nextInt(TextFieldPlaceholders.quotes.size)]
+
+) {
+    OutlinedTextField(
+        value = textFieldValue,
+        onValueChange = onValueChange,
+        placeholder = {
+            Text(
+                text = randomPlaceholder,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                style = MaterialTheme.typography.bodyMedium,
+                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+            )
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight()
+            .heightIn(min = 180.dp),
+        singleLine = false,
+        maxLines = 13,
     )
 }
