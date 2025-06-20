@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -21,7 +20,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,11 +30,17 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.timecapsule.data.Note
@@ -44,7 +48,43 @@ import com.example.timecapsule.data.NoteCategory
 import com.example.timecapsule.data.NoteDao
 import com.example.timecapsule.data.SourceBindingDao
 import kotlinx.coroutines.launch
-import kotlin.random.Random
+
+@Composable
+fun HighlightedText(
+    text: String,
+    modifier: Modifier = Modifier
+) {
+    val annotatedString = buildAnnotatedString {
+        val regex = "\\*\\*(.*?)\\*\\*".toRegex()
+        var currentIndex = 0
+
+        regex.findAll(text).forEach { matchResult ->
+            val start = matchResult.range.first
+            val end = matchResult.range.last
+            val highlightedText = matchResult.groupValues[1]
+
+            if (currentIndex < start) {
+                append(text.substring(currentIndex, start))
+            }
+
+            pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
+            append(highlightedText)
+            pop()
+
+            currentIndex = end + 1
+        }
+
+        if (currentIndex < text.length) {
+            append(text.substring(currentIndex))
+        }
+    }
+
+    Text(
+        text = annotatedString,
+        style = MaterialTheme.typography.bodyLarge,
+        modifier = modifier
+    )
+}
 
 @Composable
 fun NoteDialog(
@@ -57,9 +97,19 @@ fun NoteDialog(
 ) {
     val coroutineScope = rememberCoroutineScope()
     var category by remember { mutableStateOf(initialNote.category?.name ?: "BOOK") }
-    val categories = NoteCategory.values().map { it.name }
+    val categories = NoteCategory.entries.map { it.name }
 
     var text by remember { mutableStateOf(initialNote.text) }
+//    var textFieldValue by remember { mutableStateOf(TextFieldValue(initialNote.text)) }
+
+    var textFieldValue by remember {
+        mutableStateOf(
+            TextFieldValue(
+                annotatedString = AnnotatedString(initialNote.text ?: "")
+            )
+        )
+    }
+
     var saidWho by remember { mutableStateOf(initialNote.saidWho ?: "") }
     var title by remember { mutableStateOf(initialNote.title ?: "") }
     var url by remember { mutableStateOf(initialNote.url ?: "") }
@@ -157,7 +207,6 @@ fun NoteDialog(
         return suggestions.filter { it.startsWith(input, ignoreCase = true) }
     }
 
-    // --- Modified handleSelection logic ---
     suspend fun handleSelection(field: String, value: String) {
         lastSelectedField = field
         lastSelectedValue = value
@@ -373,28 +422,52 @@ fun NoteDialog(
                 ) {
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Random quote placeholder for the text field
-                    val randomPlaceholder = remember { TextFieldPlaceholders.quotes[Random.nextInt(TextFieldPlaceholders.quotes.size)] }
-
                     // Main text input field
-                    OutlinedTextField(
-                        value = text,
-                        onValueChange = { text = it },
-                        placeholder = {
-                            Text(
-                                text = randomPlaceholder,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .fillMaxHeight()
-                            .heightIn(min = 180.dp),
-                        singleLine = false,
-                        maxLines = 13,
+//                    MainTextFieldNonHighlightable(
+//                        textFieldValue = textFieldValue,
+//                        onValueChange = { newValue -> textFieldValue = newValue },
+//                    )
+
+                    MainTextFieldHighlightable(
+                        textFieldValue = textFieldValue,
+                        onValueChange = { newValue -> textFieldValue = newValue }
                     )
+
+                    Spacer(Modifier.height(4.dp))
+
+                    // Highlight button
+                    Button(
+                        onClick = {
+                            val selection = textFieldValue.selection
+                            if (selection.start != selection.end) {
+                                try {
+                                    val text = textFieldValue.text
+                                    val selectedText = text.substring(selection.start, selection.end)
+
+                                    // Remove any existing ** markers from the selected text
+                                    val cleanedText = selectedText.replace("**", "")
+                                    // Apply bold formatting to the cleaned text
+                                    val boldText = "**$cleanedText**"
+
+                                    // Replace the selected text with the bold-marked version
+                                    val newText = text.replaceRange(selection.start, selection.end, boldText)
+
+                                    // Update the text field with new text and move cursor to end of bolded section
+                                    val newCursorPos = selection.start + boldText.length
+                                    textFieldValue = textFieldValue.copy(
+                                        text = newText,
+                                        selection = TextRange(newCursorPos)
+                                    )
+                                } catch (e: Exception) {
+                                    // Prevent crashes
+                                }
+                            }
+                        },
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Text("Bold")
+                    }
+
 
                     Spacer(Modifier.height(12.dp))
 
@@ -556,7 +629,7 @@ fun NoteDialog(
                         onClick = {
                             val newNote = initialNote.copy(
                                 category = NoteCategory.valueOf(category),
-                                text = text,
+                                text = textFieldValue.annotatedString.text,
                                 saidWho = saidWho.ifBlank { null },
                                 title = title.ifBlank { null },
                                 url = url.ifBlank { null },
@@ -567,7 +640,7 @@ fun NoteDialog(
                             onSave(newNote)
                             onDismiss()
                         },
-                        enabled = text.isNotBlank()
+                        enabled = textFieldValue.annotatedString.text.isNotBlank()
                     ) { Text("Save") }
                 }
             }
